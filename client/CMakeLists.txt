@@ -1,5 +1,8 @@
 add_executable(client WIN32
-    src/client_main.cpp
+        src/client_main.cpp
+        include/client_global.h
+        src/client_core.cpp
+        include/client_core.h
 )
 
 target_include_directories(client PRIVATE include)

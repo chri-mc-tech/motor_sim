@@ -1,0 +1,31 @@
+#include "client_core.h"
+#include "client_global.h"
+#include <raylib.h>
+
+
+void start_graphics() {
+    using namespace graphics;
+
+    InitWindow(window_width, window_height, "game");
+
+    // auto logo = LoadImage("logo.png");
+    // SetWindowIcon(logo);
+
+    SetWindowState(FLAG_WINDOW_RESIZABLE);
+    SetWindowMinSize(640, 360);
+    SetWindowMaxSize(7680, 4320);
+
+    camera.position = (Vector3){ 0.0f, 2, 0.0f };
+    camera.target = (Vector3){ 0.0f, 2, 1.0f };
+    camera.up = (Vector3){ 0.0f, 3.0f, 0.0f };
+    camera.fovy = 110.0f;
+    camera.projection = CAMERA_PERSPECTIVE;
+
+    SetExitKey(KEY_NULL);
+}
+
+void main_loop() {
+    BeginDrawing();
+    ClearBackground({100, 150, 200});
+    EndDrawing();
+}

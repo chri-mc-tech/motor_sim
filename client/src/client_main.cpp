@@ -1,10 +1,10 @@
-#include "client_main.h"
-#include <raylib.h>
+
 
 int main() {
-    InitWindow(1280, 720, "test");
+    using namespace graphics;
+    InitWindow(window_width, window_height, "test");
 
     while (!WindowShouldClose()) {
-        ClearBackground({100, 150, 200});
+        main_loop()
     }
 }
