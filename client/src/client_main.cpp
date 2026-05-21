@@ -1,10 +1,6 @@
-
+#include "client_core.h"
 
 int main() {
-    using namespace graphics;
-    InitWindow(window_width, window_height, "test");
-
-    while (!WindowShouldClose()) {
-        main_loop()
-    }
+  start_graphics();
+  client_run();
 }

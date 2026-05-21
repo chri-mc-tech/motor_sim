@@ -3,6 +3,8 @@ add_executable(client WIN32
         include/client_global.h
         src/client_core.cpp
         include/client_core.h
+        src/client_physics.cpp
+        include/client_physics.h
 )
 
 target_include_directories(client PRIVATE include)
