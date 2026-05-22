@@ -2,6 +2,8 @@
 #include <fstream>
 #include <raylib.h>
 
+#include "client_vehicles.h"
+
 namespace graphics {
     inline Camera3D camera;
     inline int window_width = 1280;
@@ -11,6 +13,8 @@ namespace graphics {
 namespace global {
   inline bool running;
   inline std::ofstream log_file;
+  inline Vehicle main_vehicle;
+  inline double delta_time;
 }
 
 namespace config {

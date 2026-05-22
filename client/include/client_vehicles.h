@@ -1,4 +1,5 @@
 #pragma once
+#include <raylib.h>
 #include <string>
 #include <vector>
 
@@ -6,7 +7,6 @@ using std::string;
 
 class Vehicle {
 public:
-
   // dati statici
   double max_rpm = 0.0;
   double engine_torque = 0.0;
@@ -24,6 +24,17 @@ public:
   double current_engine_rpm = 0.0;
   double current_speed = 0.0;
   int current_gear = 0;
+
+  // altro
+  Vector3 location = {0, 0, 0};
+  Vector3 rotation = {0, 0, 0};
+
+  double wheel_radius = 0.35;
+
+  Mesh mesh;
+  Model model;
+  Texture texture;
+
 };
 
 namespace vehicles {

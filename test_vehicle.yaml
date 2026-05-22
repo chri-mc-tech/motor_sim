@@ -3,7 +3,7 @@ engine:
   torque: 320.0
 
 transmission:
-  total_gears: 7
+  total_gears: 6
   gear_ratios:
     - -3.20 # retromarcia
     - 3.80 # 1
