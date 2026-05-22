@@ -1,6 +1,7 @@
 #include "client_core.h"
 
 #include <chrono>
+#include <math.h>
 #include <raylib.h>
 #include "client_global.h"
 #include "client_logger.h"
@@ -19,7 +20,7 @@ void client_run() {
   vehicles::vehicle_debug(main_vehicle);
   vehicles::validate_transmission(main_vehicle);
 
-  main_vehicle.mesh = GenMeshCube(1.8, 1.2, 4.5);
+  main_vehicle.mesh = GenMeshCube(1.6, 1.0, 2.5);
   main_vehicle.model = LoadModelFromMesh(main_vehicle.mesh);
 
 
@@ -39,6 +40,7 @@ void client_run() {
     last = now;
 
     update_input();
+    update_camera();
     physics_loop();
     render_loop();
   }
@@ -71,16 +73,45 @@ void start_graphics() {
 void update_input() {
   using global::main_vehicle;
 
-  float frame_speed = 8 * static_cast<float>(global::delta_time);
+  float frame_speed = 8 * global::delta_time;
+  float turn_speed = 2.5 * global::delta_time;
 
-  UpdateCameraPro(&graphics::camera, {
-      (static_cast<float>(IsKeyDown(KEY_W)) - static_cast<float>(IsKeyDown(KEY_S))) * frame_speed,
-      0,0},
-      {(static_cast<float>(IsKeyDown(KEY_D)) - static_cast<float>(IsKeyDown(KEY_A))) * static_cast<float>(global::delta_time) * 50, 0, 0}, 0);
+  float dir_x = sinf(main_vehicle.rotation.y);
+  float dir_z = cosf(main_vehicle.rotation.y);
 
-  main_vehicle.location = graphics::camera.position;
-  main_vehicle.location.y -= 1;
+  if (IsKeyDown(KEY_W)) {
+    main_vehicle.location.x += dir_x * frame_speed;
+    main_vehicle.location.z += dir_z * frame_speed;
+  }
 
+  if (IsKeyDown(KEY_S)) {
+    main_vehicle.location.x -= dir_x * frame_speed;
+    main_vehicle.location.z -= dir_z * frame_speed;
+  }
+  if (IsKeyDown(KEY_D)) main_vehicle.rotation.y -= turn_speed;
+  if (IsKeyDown(KEY_A)) main_vehicle.rotation.y += turn_speed;
+
+}
+
+void update_camera() {
+  using global::main_vehicle;
+
+  Vector3 offset = {
+    0.0f,
+    1.2f,
+    0.0f
+  };
+
+  offset.x -= sinf(main_vehicle.rotation.y) * 0.3f;
+  offset.z -= cosf(main_vehicle.rotation.y) * 0.3f;
+
+  graphics::camera.position.x = main_vehicle.location.x + offset.x;
+  graphics::camera.position.y = main_vehicle.location.y + offset.y;
+  graphics::camera.position.z = main_vehicle.location.z + offset.z;
+
+  graphics::camera.target.x = graphics::camera.position.x + sinf(main_vehicle.rotation.y);
+  graphics::camera.target.y = graphics::camera.position.y;
+  graphics::camera.target.z = graphics::camera.position.z + cosf(main_vehicle.rotation.y);
 
 
 }
@@ -98,13 +129,13 @@ void render_loop() {
   DrawCube({0, -1, 0}, 10, 0.2, 10, {110, 50, 160, 255});
   // DrawCube(main_vehicle.location, 1.8, 1.2, 4.5, {20, 20, 100, 255});
   DrawModelEx(
-    main_vehicle.model,
-    main_vehicle.location,
-    (Vector3){ 0.0f, 1.0f, 0.0f },
-    main_vehicle.rotation.y,
-    (Vector3){ 1.0f, 1.0f, 1.0f },
-    WHITE
-);
+      main_vehicle.model,
+      main_vehicle.location,
+      { 0.0f, 1.0f, 0.0f },
+      main_vehicle.rotation.y * RAD2DEG,
+      { 1.0f, 1.0f, 1.0f },
+      WHITE
+  );
 
   EndMode3D();
   EndDrawing();
