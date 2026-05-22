@@ -6,8 +6,15 @@
 void client_run() {
   global::running = true;
 
-  if (vehicles::vehicle_file_exist("test.yaml"))
-  vehicles::load_vehicle_from_file("test.yaml");
+  Vehicle main_vehicle;
+
+  if (vehicles::vehicle_file_exist("test.yaml")) {
+    main_vehicle = vehicles::load_vehicle_from_file("test.yaml");
+  }
+
+  vehicles::vehicle_debug(main_vehicle);
+  vehicles::validate_transmission(main_vehicle);
+
 
   while (global::running) {
     if (WindowShouldClose()) {
@@ -16,6 +23,8 @@ void client_run() {
 
     main_loop();
   }
+
+
 }
 
 void start_graphics() {

@@ -11,22 +11,24 @@ public:
   double max_rpm = 0.0;
   double engine_torque = 0.0;
 
-  int total_gears = 0; // contando una sola retromarcia e non contando folle
+  int total_forward_gears = 0;
   std::vector<double> gear_ratios; // la prima è la retromarcia
   double final_drive = 0.0;
 
-  double mass = 0.0;
+  double total_mass = 0.0;
 
   double grip = 0.0;
   double downforce_factor = 0.0;
 
   // dati dinamici
-  double engine_rpm = 0.0;
-  double speed = 0.0;
-  int gear = 0;
+  double current_engine_rpm = 0.0;
+  double current_speed = 0.0;
+  int current_gear = 0;
 };
 
 namespace vehicles {
+  bool validate_transmission(const Vehicle &t_vehicle);
   bool vehicle_file_exist(const string& file_name);
   Vehicle load_vehicle_from_file(const string & file_name);
+  void vehicle_debug(const Vehicle &t_vehicle);
 }
