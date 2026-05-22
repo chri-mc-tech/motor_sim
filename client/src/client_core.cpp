@@ -1,9 +1,13 @@
 #include "client_core.h"
 #include <raylib.h>
 #include "client_global.h"
+#include "client_vehicles.h"
 
 void client_run() {
   global::running = true;
+
+  if (vehicles::vehicle_file_exist("test.yaml"))
+  vehicles::load_vehicle_from_file("test.yaml");
 
   while (global::running) {
     if (WindowShouldClose()) {

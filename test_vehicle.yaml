@@ -1,0 +1,22 @@
+engine:
+  max_rpm: 7000.0
+  torque: 320.0
+
+transmission:
+  total_gears: 7
+  gear_ratios:
+    - -3.20 # retromarcia
+    - 3.80 # 1
+    - 2.20 # 2
+    - 1.50 # 3
+    - 1.15 # 4
+    - 0.92 # 5
+    - 0.75 # 6
+  final_drive: 3.90
+
+vehicle:
+  mass: 1450.0
+
+physics:
+  grip: 1.0
+  downforce_factor: 0.15

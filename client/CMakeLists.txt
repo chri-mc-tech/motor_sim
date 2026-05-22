@@ -5,6 +5,11 @@ add_executable(client WIN32
         include/client_core.h
         src/client_physics.cpp
         include/client_physics.h
+        src/client_vehicles.cpp
+        include/client_vehicles.h
+        src/client_logger.cpp
+        include/client_logger.h
+
 )
 
 target_include_directories(client PRIVATE include)
