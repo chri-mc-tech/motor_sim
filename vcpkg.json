@@ -11,8 +11,5 @@
   }, {
     "name" : "enet",
     "version>=" : "1.3.18"
-  }, {
-    "name" : "joltphysics",
-    "version>=" : "5.5.0"
   } ]
 }
