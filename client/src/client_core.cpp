@@ -26,7 +26,12 @@ void client_run() {
   main_vehicle.mesh = GenMeshCube(1.5, 0.8, 2.0);
   main_vehicle.model = LoadModelFromMesh(main_vehicle.mesh);
 
+  Mesh track_test_mesh = GenMeshCube(100, 0.2, 100);
+  global::test_track_model = LoadModelFromMesh(track_test_mesh);
 
+  Texture texture = LoadTexture("test_texture.png");
+
+  global::test_track_model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture;
 
   auto last = std::chrono::high_resolution_clock::now();
 
@@ -124,7 +129,7 @@ void physics_loop() {
   double mechanical_and_asphalt_friction_constant = 12.0;
   double rolling_resistance = mechanical_and_asphalt_friction_constant * main_vehicle.current_forward_velocity;
 
-  double brake_coefficient = 10000.0;
+  double brake_coefficient = 20000.0;
   int temp;
   if (main_vehicle.current_forward_velocity == 0) {temp = 0;}
   else if (main_vehicle.current_forward_velocity > 0) {temp = 1;}
@@ -214,7 +219,7 @@ void render_loop() {
   ClearBackground({100, 150, 200});
   BeginMode3D(graphics::camera);
 
-  DrawCube({0, -0.2, 0}, 100, 0.2, 100, {110, 50, 160, 255});
+  DrawModel(global::test_track_model, {0, 0, 0}, 1, WHITE);
   // DrawCube(main_vehicle.location, 1.8, 1.2, 4.5, {20, 20, 100, 255});
   DrawModelEx(
       main_vehicle.model,

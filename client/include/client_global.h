@@ -16,6 +16,8 @@ namespace global {
   inline Vehicle main_vehicle;
   inline double delta_time;
   inline double ground_level = 0.0;
+
+  inline Model test_track_model;
 }
 
 namespace config {
