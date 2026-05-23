@@ -23,7 +23,7 @@ void client_run() {
     log_error("vehicle transmission error");
   }
 
-  main_vehicle.mesh = GenMeshCube(1.6, 1.0, 2.5);
+  main_vehicle.mesh = GenMeshCube(1.5, 0.8, 2.0);
   main_vehicle.model = LoadModelFromMesh(main_vehicle.mesh);
 
 
@@ -101,6 +101,11 @@ void physics_loop() {
   double peak_rpm = (main_vehicle.max_rpm / 4) * 3;
   main_vehicle.current_engine_torque = main_vehicle.max_engine_torque * (1 - pow(((main_vehicle.current_engine_rpm - peak_rpm) / peak_rpm), 2));
 
+  if (main_vehicle.current_engine_rpm >= main_vehicle.max_rpm) {
+    main_vehicle.current_engine_torque = 0;
+  }
+
+
   if (main_vehicle.current_gear == 0)
     main_vehicle.current_gear_ratio = 0;
   else if (main_vehicle.current_gear == -1)
@@ -141,9 +146,6 @@ void physics_loop() {
     }
   }
 
-  main_vehicle.current_location.z += main_vehicle.current_forward_velocity * delta_time;
-
-
   double idle_rpm = 900.0;
 
   if (main_vehicle.current_gear == 0) {
@@ -162,6 +164,24 @@ void physics_loop() {
 
   main_vehicle.current_engine_rpm = std::clamp(main_vehicle.current_engine_rpm, idle_rpm, main_vehicle.max_rpm);
 
+  double steer_sensitivity = 0.4;
+
+  main_vehicle.current_rotation.y = main_vehicle.current_rotation.y + (main_vehicle.current_steer * main_vehicle.current_forward_velocity * -steer_sensitivity * delta_time);
+
+  main_vehicle.current_forward.x = sin(main_vehicle.current_rotation.y);
+  main_vehicle.current_forward.z = cos(main_vehicle.current_rotation.y);
+
+  main_vehicle.current_location.x = main_vehicle.current_location.x + (main_vehicle.current_forward.x * main_vehicle.current_forward_velocity * delta_time);
+  main_vehicle.current_location.z = main_vehicle.current_location.z + (main_vehicle.current_forward.z * main_vehicle.current_forward_velocity * delta_time);
+
+
+  main_vehicle.current_velocity.y = main_vehicle.current_velocity.y - (physics::GRAVITATIONAL_FORCE * delta_time);
+  main_vehicle.current_location.y = main_vehicle.current_location.y + (main_vehicle.current_velocity.y * delta_time);
+
+  if (main_vehicle.current_location.y < global::ground_level) {
+    main_vehicle.current_location.y = global::ground_level;
+    main_vehicle.current_velocity.y = 0;
+  }
 }
 
 void update_camera() {
@@ -194,7 +214,7 @@ void render_loop() {
   ClearBackground({100, 150, 200});
   BeginMode3D(graphics::camera);
 
-  DrawCube({0, -1, 0}, 10, 0.2, 10, {110, 50, 160, 255});
+  DrawCube({0, -0.2, 0}, 100, 0.2, 100, {110, 50, 160, 255});
   // DrawCube(main_vehicle.location, 1.8, 1.2, 4.5, {20, 20, 100, 255});
   DrawModelEx(
       main_vehicle.model,
@@ -214,7 +234,8 @@ void render_loop() {
                       "\n throttle: " + std::to_string(main_vehicle.current_throttle) +
                       "\n brake: " + std::to_string(main_vehicle.current_brake) +
                       "\n acceleration: " + std::to_string(main_vehicle.current_forward_acceleration) +
-                      "\n speed: " + std::to_string(main_vehicle.current_forward_velocity) +
+                      "\n speed (m/s): " + std::to_string(main_vehicle.current_forward_velocity) +
+                      "\n speed (km/h): " + std::to_string(main_vehicle.current_forward_velocity * 3.6) +
                       "\n rpm: " + std::to_string(main_vehicle.current_engine_rpm) +
                       "\n steer: " + std::to_string(main_vehicle.current_steer);
 

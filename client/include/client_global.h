@@ -15,6 +15,7 @@ namespace global {
   inline std::ofstream log_file;
   inline Vehicle main_vehicle;
   inline double delta_time;
+  inline double ground_level = 0.0;
 }
 
 namespace config {

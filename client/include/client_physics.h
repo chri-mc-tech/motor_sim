@@ -1,6 +1,6 @@
 #pragma once
 
 namespace physics {
-  inline constexpr double GRAVITY = 9.81;
+  inline constexpr double GRAVITATIONAL_FORCE = 9.81;
 
 }
