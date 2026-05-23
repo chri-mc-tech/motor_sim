@@ -1,10 +1,11 @@
 #include "client_core.h"
 
 #include <chrono>
-#include <math.h>
+#include <cmath>
 #include <raylib.h>
 #include "client_global.h"
 #include "client_logger.h"
+#include "client_physics.h"
 #include "client_vehicles.h"
 
 void client_run() {
@@ -22,9 +23,6 @@ void client_run() {
 
   main_vehicle.mesh = GenMeshCube(1.6, 1.0, 2.5);
   main_vehicle.model = LoadModelFromMesh(main_vehicle.mesh);
-
-
-
 
 
 
@@ -69,27 +67,86 @@ void start_graphics() {
   SetExitKey(KEY_NULL);
 }
 
-
 void update_input() {
   using global::main_vehicle;
 
-  float frame_speed = 8 * global::delta_time;
-  float turn_speed = 2.5 * global::delta_time;
+  main_vehicle.throttle = 0.0;
+  main_vehicle.steer = 0.0;
+  main_vehicle.brake = 0.0;
 
-  float dir_x = sinf(main_vehicle.rotation.y);
-  float dir_z = cosf(main_vehicle.rotation.y);
+  if (IsKeyDown(KEY_W)) main_vehicle.throttle = 1.0;
+  if (IsKeyDown(KEY_S)) main_vehicle.brake = 1.0;
 
-  if (IsKeyDown(KEY_W)) {
-    main_vehicle.location.x += dir_x * frame_speed;
-    main_vehicle.location.z += dir_z * frame_speed;
+  if (IsKeyDown(KEY_A)) main_vehicle.steer = 1.0;
+  if (IsKeyDown(KEY_D)) main_vehicle.steer = -1.0;
+
+  if (IsKeyPressed(KEY_Q)) {
+    if (main_vehicle.current_gear > -1) {
+      main_vehicle.current_gear -= 1;
+    }
+  }
+  if (IsKeyPressed(KEY_E)) {
+    if (main_vehicle.current_gear < main_vehicle.total_forward_gears) {
+      main_vehicle.current_gear += 1;
+    }
+  }
+}
+
+void physics_loop() {
+  using global::main_vehicle;
+
+  main_vehicle.forward = {
+    sinf(main_vehicle.rotation.y),
+    0,
+    cosf(main_vehicle.rotation.y)
+  };
+
+  if (main_vehicle.current_gear == 0)
+    main_vehicle.current_gear_ratio = 0;
+  else if (main_vehicle.current_gear == -1)
+    main_vehicle.current_gear_ratio = main_vehicle.gear_ratios[0];
+  else {
+    main_vehicle.current_gear_ratio = main_vehicle.gear_ratios[main_vehicle.current_gear];
   }
 
-  if (IsKeyDown(KEY_S)) {
-    main_vehicle.location.x -= dir_x * frame_speed;
-    main_vehicle.location.z -= dir_z * frame_speed;
-  }
-  if (IsKeyDown(KEY_D)) main_vehicle.rotation.y -= turn_speed;
-  if (IsKeyDown(KEY_A)) main_vehicle.rotation.y += turn_speed;
+  main_vehicle.wheels_torque = main_vehicle.engine_torque * main_vehicle.current_gear_ratio * main_vehicle.final_drive;
+  main_vehicle.wheels_force = main_vehicle.wheels_torque / main_vehicle.wheel_radius;
+
+  double air_density = 1.225;
+  double drag_coefficient = 0.3; // quanto è aereodinamica, minore, piu aereodinamica
+  double front_area = 1.9; //quanto è grande davanti, minore, meno resistenza
+
+  double drag_force = 0.5 * air_density * drag_coefficient * front_area * main_vehicle.current_forward_velocity * main_vehicle.current_forward_velocity;
+
+
+  double coefficiente_attrito_gomme = 0.009; // coefficiente di attrito tra gomme e asfalto, minore, meglio
+  double rolling_resistence = coefficiente_attrito_gomme * main_vehicle.total_mass * physics::GRAVITY;
+
+
+  double total_force = main_vehicle.wheels_force - drag_force - rolling_resistence - main_vehicle.brake;
+
+
+  main_vehicle.current_forward_acceleration = total_force / main_vehicle.total_mass;
+
+  // main_vehicle.current_forward_acceleration *= main_vehicle.throttle;
+
+  main_vehicle.current_acceleration.x = main_vehicle.forward.x * main_vehicle.current_forward_acceleration;
+  main_vehicle.current_acceleration.y = 0;
+  main_vehicle.current_acceleration.z = main_vehicle.forward.z * main_vehicle.current_forward_acceleration;
+
+  main_vehicle.current_velocity.x += main_vehicle.current_acceleration.x * global::delta_time;
+  main_vehicle.current_velocity.y += main_vehicle.current_acceleration.y * global::delta_time;
+  main_vehicle.current_velocity.z += main_vehicle.current_acceleration.z * global::delta_time;
+
+  main_vehicle.current_forward_velocity =
+    main_vehicle.current_velocity.x * main_vehicle.forward.x +
+    main_vehicle.current_velocity.y * main_vehicle.forward.y +
+    main_vehicle.current_velocity.z * main_vehicle.forward.z;
+
+
+  main_vehicle.location.x += main_vehicle.current_velocity.x * global::delta_time;
+  main_vehicle.location.y += main_vehicle.current_velocity.y * global::delta_time;
+  main_vehicle.location.z += main_vehicle.current_velocity.z * global::delta_time;
 
 }
 
@@ -116,9 +173,6 @@ void update_camera() {
 
 }
 
-void physics_loop() {
-
-}
 
 void render_loop() {
   using global::main_vehicle;
@@ -138,5 +192,17 @@ void render_loop() {
   );
 
   EndMode3D();
+  string debug_text = "\n gear: " + std::to_string(main_vehicle.current_gear) +
+                      "\n gear ratio: " + std::to_string(main_vehicle.current_gear_ratio) +
+                      "\n engine torque: " + std::to_string(main_vehicle.engine_torque) +
+                      "\n wheel torque: " + std::to_string(main_vehicle.wheels_torque) +
+                      "\n throttle: " + std::to_string(main_vehicle.throttle) +
+                      "\n brake: " + std::to_string(main_vehicle.brake) +
+                      "\n acceleration: " + std::to_string(main_vehicle.current_forward_acceleration) +
+                      "\n speed: " + std::to_string(main_vehicle.current_forward_velocity) +
+                      "\n steer: " + std::to_string(main_vehicle.steer);
+
+
+  DrawText(debug_text.c_str(), 0, 0, 20, WHITE);
   EndDrawing();
 }

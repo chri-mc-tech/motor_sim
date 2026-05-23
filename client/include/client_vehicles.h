@@ -21,15 +21,27 @@ public:
   double downforce_factor = 0.0;
 
   // dati dinamici
+  double current_forward_velocity = 0.0;
+  double current_forward_acceleration = 0.0;
   double current_engine_rpm = 0.0;
-  double current_speed = 0.0;
   int current_gear = 0;
+  double current_gear_ratio = 0;
+  double throttle = 0.0;
+  double brake = 0.0;
+  double steer = 0.0;
+  double wheels_torque = 0.0;
+  double wheels_force = 0.0;
+
+  Vector3 forward = {0, 0, 1};
+  Vector3 current_velocity = {0, 0, 0};
+  Vector3 current_acceleration = {0, 0, 0};
 
   // altro
   Vector3 location = {0, 0, 0};
   Vector3 rotation = {0, 0, 0};
 
   double wheel_radius = 0.35;
+
 
   Mesh mesh;
   Model model;

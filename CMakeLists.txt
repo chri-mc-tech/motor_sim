@@ -7,6 +7,7 @@ find_package(unofficial-enet CONFIG REQUIRED)
 find_package(yaml-cpp CONFIG REQUIRED)
 find_package(raylib CONFIG REQUIRED)
 find_package(glfw3 CONFIG REQUIRED)
+find_package(Jolt CONFIG REQUIRED)
 
 add_subdirectory(shared)
 add_subdirectory(client)
@@ -20,6 +21,7 @@ target_link_libraries(server PRIVATE
 target_link_libraries(client PRIVATE
         unofficial::enet::enet
         yaml-cpp::yaml-cpp
+        Jolt::Jolt
         raylib
         glfw
 )
