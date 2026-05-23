@@ -51,11 +51,11 @@ namespace vehicles {
     }
 
     try {
-      loaded_vehicle.engine_torque = engine_values["torque"].as<double>();
+      loaded_vehicle.max_engine_torque = engine_values["max_torque"].as<double>();
     } catch (BadConversion &error) {
       has_errors = true;
-      if (error.mark.is_null()) log_error(file_name + ": missing parameter \"torque\"");
-      else log_error(file_name + ": invalid vehicle parameter \"torque\"");
+      if (error.mark.is_null()) log_error(file_name + ": missing parameter \"max_torque\"");
+      else log_error(file_name + ": invalid vehicle parameter \"max_torque\"");
     }
 
     try {
@@ -115,7 +115,7 @@ namespace vehicles {
 
   void vehicle_debug(const Vehicle &t_vehicle) {
     log_debug("max rpm: " + std::to_string(t_vehicle.max_rpm));
-    log_debug("engine torque: " + std::to_string(t_vehicle.engine_torque));
+    log_debug("engine torque: " + std::to_string(t_vehicle.max_engine_torque));
 
     log_debug("total forward gears: " + std::to_string(t_vehicle.total_forward_gears));
     log_debug("gear_ratios: ");

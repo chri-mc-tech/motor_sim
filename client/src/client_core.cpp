@@ -79,8 +79,8 @@ void update_input() {
   if (IsKeyDown(KEY_W)) main_vehicle.current_throttle = 1.0;
   if (IsKeyDown(KEY_S)) main_vehicle.current_brake = 1.0;
 
-  if (IsKeyDown(KEY_A)) main_vehicle.current_steer = 1.0;
-  if (IsKeyDown(KEY_D)) main_vehicle.current_steer = -1.0;
+  if (IsKeyDown(KEY_A)) main_vehicle.current_steer = -1.0;
+  if (IsKeyDown(KEY_D)) main_vehicle.current_steer = 1.0;
 
   if (IsKeyPressed(KEY_Q)) {
     if (main_vehicle.current_gear > -1) {
@@ -98,6 +98,9 @@ void physics_loop() {
   using global::main_vehicle;
   using global::delta_time;
 
+  double peak_rpm = (main_vehicle.max_rpm / 4) * 3;
+  main_vehicle.current_engine_torque = main_vehicle.max_engine_torque * (1 - pow(((main_vehicle.current_engine_rpm - peak_rpm) / peak_rpm), 2));
+
   if (main_vehicle.current_gear == 0)
     main_vehicle.current_gear_ratio = 0;
   else if (main_vehicle.current_gear == -1)
@@ -107,7 +110,7 @@ void physics_loop() {
   }
 
   // calcolo coppia ruote
-  main_vehicle.current_wheels_torque = main_vehicle.engine_torque * main_vehicle.current_throttle * main_vehicle.current_gear_ratio * main_vehicle.final_drive;
+  main_vehicle.current_wheels_torque = main_vehicle.current_engine_torque * main_vehicle.current_throttle * main_vehicle.current_gear_ratio * main_vehicle.final_drive;
   // calcolo forza che le ruote applicano sul loro bordo
   main_vehicle.current_wheels_force = main_vehicle.current_wheels_torque / main_vehicle.wheel_radius;
 
@@ -139,6 +142,26 @@ void physics_loop() {
   }
 
   main_vehicle.current_location.z += main_vehicle.current_forward_velocity * delta_time;
+
+
+  double idle_rpm = 900.0;
+
+  if (main_vehicle.current_gear == 0) {
+    if (main_vehicle.current_throttle == 0) {
+      main_vehicle.current_engine_rpm -= 2000.0 * delta_time;
+    }
+    else {
+      main_vehicle.current_engine_rpm += 7000.0 * main_vehicle.current_throttle * delta_time;
+    }
+  }
+
+  else {
+    double wheels_angular_velocity = main_vehicle.current_forward_velocity / main_vehicle.wheel_radius;
+    main_vehicle.current_engine_rpm = abs(wheels_angular_velocity) * main_vehicle.current_gear_ratio * main_vehicle.final_drive * (60 / (2 * std::numbers::pi));
+  }
+
+  main_vehicle.current_engine_rpm = std::clamp(main_vehicle.current_engine_rpm, idle_rpm, main_vehicle.max_rpm);
+
 }
 
 void update_camera() {
@@ -185,12 +208,14 @@ void render_loop() {
   EndMode3D();
   string debug_text = "\n gear: " + std::to_string(main_vehicle.current_gear) +
                       "\n gear ratio: " + std::to_string(main_vehicle.current_gear_ratio) +
-                      "\n engine torque: " + std::to_string(main_vehicle.engine_torque) +
+                      "\n engine max torque: " + std::to_string(main_vehicle.max_engine_torque) +
+                      "\n engine torque: " + std::to_string(main_vehicle.current_engine_torque) +
                       "\n wheel torque: " + std::to_string(main_vehicle.current_wheels_torque) +
                       "\n throttle: " + std::to_string(main_vehicle.current_throttle) +
                       "\n brake: " + std::to_string(main_vehicle.current_brake) +
                       "\n acceleration: " + std::to_string(main_vehicle.current_forward_acceleration) +
                       "\n speed: " + std::to_string(main_vehicle.current_forward_velocity) +
+                      "\n rpm: " + std::to_string(main_vehicle.current_engine_rpm) +
                       "\n steer: " + std::to_string(main_vehicle.current_steer);
 
 

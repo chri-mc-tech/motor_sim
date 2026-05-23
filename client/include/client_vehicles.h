@@ -9,7 +9,7 @@ class Vehicle {
 public:
   // dati statici
   double max_rpm = 0.0;
-  double engine_torque = 0.0;
+  double max_engine_torque = 0.0;
 
   int total_forward_gears = 0;
   std::vector<double> gear_ratios; // la prima è la retromarcia
@@ -31,6 +31,7 @@ public:
   double current_steer = 0.0;
   double current_wheels_torque = 0.0;
   double current_wheels_force = 0.0;
+  double current_engine_torque = 0.0;
 
   Vector3 current_forward = {0, 0, 1};
   Vector3 current_velocity = {0, 0, 0};
