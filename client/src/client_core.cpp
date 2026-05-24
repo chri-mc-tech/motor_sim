@@ -217,8 +217,8 @@ void update_input() {
 void update_camera() {
   using global::main_vehicle;
 
-  Vector3 localOffset = { 0.0f, 1.2f, 1.0f };
-  Vector3 localTarget = { 0.0f, 1.1f, 2.0f };
+  Vector3 localOffset = { 0.0f, 2.0f, -3.8f };
+  Vector3 localTarget = { 0.0f, 1.8f, 2.0f };
   Matrix mat = MatrixRotateY(main_vehicle.current_rotation.y);
 
   graphics::camera.position = Vector3Add(main_vehicle.current_location, Vector3Transform(localOffset, mat));
@@ -234,7 +234,7 @@ void render_loop() {
   ClearBackground({100, 150, 200});
   BeginMode3D(graphics::camera);
 
-  DrawModel(global::test_track_model, {0, 0, 0}, 1, WHITE);
+  DrawModel(global::test_track_model, {0, 0, 0}, 1.1, WHITE);
 
   DrawModelEx(
       main_vehicle.model,
