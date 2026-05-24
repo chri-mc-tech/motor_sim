@@ -4,6 +4,7 @@
 #include <chrono>
 #include <cmath>
 #include <raylib.h>
+#include <raymath.h>
 
 #include "client_ffb.h"
 #include "client_global.h"
@@ -27,9 +28,12 @@ void client_run() {
     log_error("vehicle transmission error");
   }
 
+  /*
   main_vehicle.mesh = GenMeshCube(1.5, 0.8, 2.0);
   main_vehicle.model = LoadModelFromMesh(main_vehicle.mesh);
+  */
 
+  main_vehicle.model = LoadModel("test_vehicle.glb");
 
   global::test_track_model = LoadModel("test_circuit.glb");
 
@@ -39,17 +43,11 @@ void client_run() {
   HideCursor();
 
   InitAudioDevice();
-  Music engine_idle = LoadMusicStream("engine_1600_idle.wav");
-  Music engine_mid  = LoadMusicStream("engine_3400.wav");
-  Music engine_high = LoadMusicStream("engine_7200.wav");
+  Music engine_low = LoadMusicStream("engine_low.wav");
+  Music engine_high = LoadMusicStream("engine_high.wav");
 
-  PlayMusicStream(engine_idle);
-  PlayMusicStream(engine_mid);
+  PlayMusicStream(engine_low);
   PlayMusicStream(engine_high);
-
-
-
-  log_debug(GetGamepadName(0));
 
   ffb_init();
 
@@ -65,29 +63,16 @@ void client_run() {
 
     update_input();
 
-    UpdateMusicStream(engine_idle);
-    UpdateMusicStream(engine_mid);
+    UpdateMusicStream(engine_low);
     UpdateMusicStream(engine_high);
 
     float rpm_ratio = main_vehicle.current_engine_rpm / main_vehicle.max_rpm;
 
-    float vol_idle = std::max(0.0f, 1.0f - rpm_ratio * 3.0f);
-    float vol_mid  = std::max(0.0f, 1.0f - abs(rpm_ratio - 0.5f) * 4.0f);
-    float vol_high = std::max(0.0f, (rpm_ratio - 0.33f) * 3.0f);
+    SetMusicVolume(engine_low, std::max(0.0f, 1.0f - rpm_ratio * 1.5f));
+    SetMusicVolume(engine_high, std::min(1.0f, rpm_ratio * 1.5f));
 
-    SetMusicVolume(engine_idle, vol_idle);
-    SetMusicVolume(engine_mid,  vol_mid);
-    SetMusicVolume(engine_high, vol_high);
-
-    SetMasterVolume(0.02);
-
-    float pitch_idle = 0.8f + rpm_ratio * 0.4f;
-    float pitch_mid  = 0.7f + rpm_ratio * 0.6f;
-    float pitch_high = 0.6f + rpm_ratio * 0.8f;
-
-    SetMusicPitch(engine_idle, pitch_idle);
-    SetMusicPitch(engine_mid,  pitch_mid);
-    SetMusicPitch(engine_high, pitch_high);
+    SetMusicPitch(engine_low, 0.9f + rpm_ratio * 0.8f);
+    SetMusicPitch(engine_high, 0.8f + rpm_ratio * 1.0f);
 
 
     update_camera();
@@ -96,22 +81,22 @@ void client_run() {
     float max_lat = main_vehicle.grip * 9.81f * (main_vehicle.lateral_stiffness / 6.0f);
     float target_lat_vel = -main_vehicle.current_steer * abs(main_vehicle.current_forward_velocity) * main_vehicle.steer_sensitivity;
 
-    float base_ffb = -main_vehicle.current_lateral_velocity * 1.5f;
-
+    float base_ffb = -main_vehicle.current_lateral_velocity * 0.8f;
     float understeer = abs(target_lat_vel) - max_lat;
-    float grip_factor = 1.0f;
-    float understeer_vibration = 0.0f;
+
+    float ffb_force = base_ffb * std::max(0.3f, 1.0f - (understeer * 0.2f));
 
     if (understeer > 0.0f && abs(main_vehicle.current_forward_velocity) > 3.0f) {
-      grip_factor = std::max(0.3f, 1.0f - (understeer * 0.2f));
-      understeer_vibration = sin(GetTime() * 160.0f) * 0.25f * std::min(understeer * 0.5f, 1.0f);
+      float vibration_intensity = std::min(understeer * 2.0f, 1.0f);
+      float wave = sin(GetTime() * 180.0f);
+      float sharp_wave = (wave > 0.0f) ? 1.0f : -1.0f;
+
+      ffb_force += sharp_wave * 1.0f * vibration_intensity;
     }
 
-    float ffb_force = (base_ffb * grip_factor) + understeer_vibration;
     ffb_force = std::clamp(ffb_force, -1.0f, 1.0f);
 
     ffb_update(ffb_force);
-
     render_loop();
   }
 
@@ -133,7 +118,7 @@ void start_graphics() {
   camera.position = (Vector3) {0.0f, 2, 0.0f};
   camera.target = (Vector3) {0.0f, 2, 1.0f};
   camera.up = (Vector3) {0.0f, 3.0f, 0.0f};
-  camera.fovy = 110.0f;
+  camera.fovy = 100.0f;
   camera.projection = CAMERA_PERSPECTIVE;
 
   SetExitKey(KEY_NULL);
@@ -172,9 +157,28 @@ void update_input() {
     int count;
     const float* axes = glfwGetJoystickAxes(GLFW_JOYSTICK_1, &count);
 
-    main_vehicle.current_steer = std::clamp(static_cast<double>(axes[0] * 4), -1.0, 1.0);
-    main_vehicle.current_throttle = 1 - ((axes[1] + 1) / 2);
-    main_vehicle.current_brake = 1 - ((axes[2] + 1) / 2);
+    int down_gear = 5;
+    int up_gear = 4;
+
+    string gamepad_name = GetGamepadName(GLFW_JOYSTICK_1);
+
+    if (gamepad_name.find("G29") != std::string::npos) {
+      main_vehicle.current_steer = std::clamp(static_cast<double>(axes[0] * 4), -1.0, 1.0);
+      main_vehicle.current_throttle = 1 - ((axes[1] + 1) / 2);
+      main_vehicle.current_brake = 1 - ((axes[2] + 1) / 2);
+
+    }
+    else {
+      main_vehicle.current_steer = axes[0];
+      main_vehicle.current_brake = (axes[4] + 1) / 2;
+      main_vehicle.current_throttle = (axes[5] + 1) / 2;
+
+      down_gear = 4;
+      up_gear = 5;
+    }
+
+
+
 
     if (main_vehicle.current_forward_velocity < 0.0) {
       main_vehicle.current_steer = -main_vehicle.current_steer;
@@ -182,47 +186,34 @@ void update_input() {
 
     const unsigned char* buttons = glfwGetJoystickButtons(GLFW_JOYSTICK_1, &count);
 
-    static bool paddle_su_premuto = false;
-    static bool paddle_giu_premuto = false;
+    static bool paddle_right_pressed = false;
+    static bool paddle_left_pressed = false;
 
-    if (buttons[4] == GLFW_PRESS && !paddle_su_premuto) {
+    if (buttons[up_gear] == GLFW_PRESS && !paddle_right_pressed) {
       if (main_vehicle.current_gear < main_vehicle.total_forward_gears) {
         main_vehicle.current_gear += 1;
       }
     }
-    paddle_su_premuto = (buttons[4] == GLFW_PRESS);
+    paddle_right_pressed = (buttons[up_gear] == GLFW_PRESS);
 
-    if (buttons[5] == GLFW_PRESS && !paddle_giu_premuto) {
+    if (buttons[down_gear] == GLFW_PRESS && !paddle_left_pressed) {
       if (main_vehicle.current_gear > -1) {
         main_vehicle.current_gear -= 1;
       }
     }
-    paddle_giu_premuto = (buttons[5] == GLFW_PRESS);
-
-
+    paddle_left_pressed = (buttons[down_gear] == GLFW_PRESS);
   }
 }
 
 void update_camera() {
   using global::main_vehicle;
 
-  Vector3 offset = {
-    0.0f,
-    1.2f,
-    0.0f
-  };
+  Vector3 localOffset = { 0.0f, 1.2f, 1.0f };
+  Vector3 localTarget = { 0.0f, 1.1f, 2.0f };
+  Matrix mat = MatrixRotateY(main_vehicle.current_rotation.y);
 
-  offset.x -= sinf(main_vehicle.current_rotation.y) * 0.3f;
-  offset.z -= cosf(main_vehicle.current_rotation.y) * 0.3f;
-
-  graphics::camera.position.x = main_vehicle.current_location.x + offset.x;
-  graphics::camera.position.y = main_vehicle.current_location.y + offset.y;
-  graphics::camera.position.z = main_vehicle.current_location.z + offset.z;
-
-  graphics::camera.target.x = graphics::camera.position.x + sinf(main_vehicle.current_rotation.y);
-  graphics::camera.target.y = graphics::camera.position.y;
-  graphics::camera.target.z = graphics::camera.position.z + cosf(main_vehicle.current_rotation.y);
-
+  graphics::camera.position = Vector3Add(main_vehicle.current_location, Vector3Transform(localOffset, mat));
+  graphics::camera.target = Vector3Add(main_vehicle.current_location, Vector3Transform(localTarget, mat));
 
 }
 
@@ -240,7 +231,7 @@ void render_loop() {
       main_vehicle.model,
       main_vehicle.current_location,
       { 0.0f, 1.0f, 0.0f },
-      main_vehicle.current_rotation.y * RAD2DEG,
+      (main_vehicle.current_rotation.y * RAD2DEG) + 180,
       { 1.0f, 1.0f, 1.0f },
       WHITE
   );

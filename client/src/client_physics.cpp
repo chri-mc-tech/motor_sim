@@ -13,8 +13,14 @@ namespace physics {
     double peak_rpm = (main_vehicle.max_rpm / 4) * 3;
     main_vehicle.current_engine_torque = main_vehicle.max_engine_torque * (1 - pow(((main_vehicle.current_engine_rpm - peak_rpm) / peak_rpm), 2));
 
+
     if (main_vehicle.current_engine_rpm >= main_vehicle.max_rpm) {
-      main_vehicle.current_engine_torque = 0;
+      if (fmod(GetTime() * 15.0, 1.0) > 0.5) {
+        main_vehicle.current_engine_rpm = main_vehicle.max_rpm * 0.85;
+        main_vehicle.current_engine_torque = -main_vehicle.max_engine_torque * 0.9;
+      }
+    } else {
+      main_vehicle.current_engine_rpm = std::clamp(main_vehicle.current_engine_rpm, main_vehicle.idle_rpm, main_vehicle.max_rpm);
     }
 
 
