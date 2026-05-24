@@ -84,7 +84,12 @@ namespace physics {
 
     else {
       double wheels_angular_velocity = main_vehicle.current_forward_velocity / main_vehicle.wheel_radius;
-      main_vehicle.current_engine_rpm = abs(wheels_angular_velocity) * main_vehicle.current_gear_ratio * main_vehicle.final_drive * (60 / (2 * std::numbers::pi));
+
+      if (excess > 0) {
+        wheels_angular_velocity += (excess / (main_vehicle.total_mass * 1.5));
+      }
+
+      main_vehicle.current_engine_rpm = abs(wheels_angular_velocity) * main_vehicle.current_gear_ratio * main_vehicle.final_drive * (60.0 / (2.0 * std::numbers::pi));
     }
 
     main_vehicle.current_engine_rpm = std::clamp(main_vehicle.current_engine_rpm, main_vehicle.idle_rpm, main_vehicle.max_rpm);

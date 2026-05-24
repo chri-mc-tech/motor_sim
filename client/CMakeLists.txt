@@ -9,8 +9,13 @@ add_executable(client
         include/client_vehicles.h
         src/client_logger.cpp
         include/client_logger.h
+        src/client_ffb.cpp
+        include/client_ffb.h
 
 )
 
 target_include_directories(client PRIVATE include)
 target_link_libraries(client PRIVATE shared)
+if(WIN32)
+    target_link_libraries(client PRIVATE dinput8 dxguid)
+endif()
