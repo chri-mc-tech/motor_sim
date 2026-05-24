@@ -9,6 +9,7 @@ class Vehicle {
 public:
   // dati statici
   double max_rpm = 0.0;
+  double idle_rpm = 0.0;
   double max_engine_torque = 0.0;
 
   int total_forward_gears = 0;

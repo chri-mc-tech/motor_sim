@@ -14,8 +14,8 @@ void client_run() {
   global::running = true;
 
 
-  if (vehicles::vehicle_file_exist("test.yaml")) {
-    main_vehicle = vehicles::load_vehicle_from_file("test.yaml");
+  if (vehicles::vehicle_file_exist("test2.yaml")) {
+    main_vehicle = vehicles::load_vehicle_from_file("test2.yaml");
   }
   else {log_error("file not found");}
 
@@ -36,9 +36,21 @@ void client_run() {
 
   auto last = std::chrono::high_resolution_clock::now();
 
+
+
+
   InitAudioDevice();
-  Music engine = LoadMusicStream("engine.wav");
-  PlayMusicStream(engine);
+  Music engine_idle = LoadMusicStream("engine_1600_idle.wav");
+  Music engine_mid  = LoadMusicStream("engine_3400.wav");
+  Music engine_high = LoadMusicStream("engine_7200.wav");
+
+  PlayMusicStream(engine_idle);
+  PlayMusicStream(engine_mid);
+  PlayMusicStream(engine_high);
+
+
+
+
 
   while (global::running) {
     if (WindowShouldClose()) {
@@ -51,11 +63,27 @@ void client_run() {
 
     update_input();
 
+    UpdateMusicStream(engine_idle);
+    UpdateMusicStream(engine_mid);
+    UpdateMusicStream(engine_high);
 
-    UpdateMusicStream(engine);
-    float pitch = 0.3f + (1.5f * (main_vehicle.current_engine_rpm / main_vehicle.max_rpm));
-    SetMusicPitch(engine, pitch);
+    float rpm_ratio = main_vehicle.current_engine_rpm / main_vehicle.max_rpm;
 
+    float vol_idle = std::max(0.0f, 1.0f - rpm_ratio * 3.0f);
+    float vol_mid  = std::max(0.0f, 1.0f - abs(rpm_ratio - 0.5f) * 4.0f);
+    float vol_high = std::max(0.0f, (rpm_ratio - 0.33f) * 3.0f);
+
+    SetMusicVolume(engine_idle, vol_idle);
+    SetMusicVolume(engine_mid,  vol_mid);
+    SetMusicVolume(engine_high, vol_high);
+
+    float pitch_idle = 0.8f + rpm_ratio * 0.4f;
+    float pitch_mid  = 0.7f + rpm_ratio * 0.6f;
+    float pitch_high = 0.6f + rpm_ratio * 0.8f;
+
+    SetMusicPitch(engine_idle, pitch_idle);
+    SetMusicPitch(engine_mid,  pitch_mid);
+    SetMusicPitch(engine_high, pitch_high);
 
     update_camera();
     physics_loop();
@@ -113,6 +141,24 @@ void update_input() {
     if (main_vehicle.current_gear < main_vehicle.total_forward_gears) {
       main_vehicle.current_gear += 1;
     }
+  }
+
+  if (IsGamepadAvailable(0)) {
+    main_vehicle.current_steer = GetGamepadAxisMovement(0, GAMEPAD_AXIS_LEFT_X); // sterzo, -1 sinistra, 1 destra
+    main_vehicle.current_brake = (GetGamepadAxisMovement(0, GAMEPAD_AXIS_LEFT_TRIGGER) + 1) / 2; // freno, -1 mollato, 1 schiacciato
+    main_vehicle.current_throttle = (GetGamepadAxisMovement(0, GAMEPAD_AXIS_RIGHT_TRIGGER) + 1) / 2; // acceleratore, -1 mollato, 1 schiacciato
+
+    if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_TRIGGER_1)) {
+      if (main_vehicle.current_gear > -1) {
+        main_vehicle.current_gear -= 1;
+      }
+    }
+    if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_TRIGGER_1)) {
+      if (main_vehicle.current_gear < main_vehicle.total_forward_gears) {
+        main_vehicle.current_gear += 1;
+      }
+    }
+
   }
 
 }
@@ -184,8 +230,6 @@ void physics_loop() {
     }
   }
 
-  double idle_rpm = 900.0;
-
   if (main_vehicle.current_gear == 0) {
     if (main_vehicle.current_throttle == 0) {
       main_vehicle.current_engine_rpm -= 2000.0 * delta_time;
@@ -200,7 +244,7 @@ void physics_loop() {
     main_vehicle.current_engine_rpm = abs(wheels_angular_velocity) * main_vehicle.current_gear_ratio * main_vehicle.final_drive * (60 / (2 * std::numbers::pi));
   }
 
-  main_vehicle.current_engine_rpm = std::clamp(main_vehicle.current_engine_rpm, idle_rpm, main_vehicle.max_rpm);
+  main_vehicle.current_engine_rpm = std::clamp(main_vehicle.current_engine_rpm, main_vehicle.idle_rpm, main_vehicle.max_rpm);
 
   double steer_sensitivity = -0.003;
   double wheelbase = 2.6;

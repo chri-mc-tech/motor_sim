@@ -1,0 +1,1 @@
+aggiungere fattore freno al file di config del veicolo e anche altri che non ricordo

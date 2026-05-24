@@ -51,6 +51,14 @@ namespace vehicles {
     }
 
     try {
+      loaded_vehicle.idle_rpm = engine_values["idle_rpm"].as<double>();
+    } catch (BadConversion &error) {
+      has_errors = true;
+      if (error.mark.is_null()) log_error(file_name + ": missing parameter \"idle_rpm\"");
+      else log_error(file_name + ": invalid vehicle parameter \"idle_rpm\"");
+    }
+
+    try {
       loaded_vehicle.max_engine_torque = engine_values["max_torque"].as<double>();
     } catch (BadConversion &error) {
       has_errors = true;
