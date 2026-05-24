@@ -22,6 +22,7 @@ public:
 
   // dati dinamici
   double current_forward_velocity = 0.0;
+  double current_lateral_velocity = 0.0;
   double current_forward_acceleration = 0.0;
   double current_engine_rpm = 0.0;
   int current_gear = 0;
@@ -33,7 +34,10 @@ public:
   double current_wheels_force = 0.0;
   double current_engine_torque = 0.0;
 
+  double lateral_stiffness = 3.0;
+
   Vector3 current_forward = {0, 0, 1};
+  Vector3 current_right = {1, 0, 0};
   Vector3 current_velocity = {0, 0, 0};
   Vector3 current_acceleration = {0, 0, 0};
 

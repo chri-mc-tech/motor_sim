@@ -13,6 +13,7 @@ void client_run() {
 
   global::running = true;
 
+
   if (vehicles::vehicle_file_exist("test.yaml")) {
     main_vehicle = vehicles::load_vehicle_from_file("test.yaml");
   }
@@ -35,6 +36,10 @@ void client_run() {
 
   auto last = std::chrono::high_resolution_clock::now();
 
+  InitAudioDevice();
+  Music engine = LoadMusicStream("engine.wav");
+  PlayMusicStream(engine);
+
   while (global::running) {
     if (WindowShouldClose()) {
       global::running = false;
@@ -45,6 +50,13 @@ void client_run() {
     last = now;
 
     update_input();
+
+
+    UpdateMusicStream(engine);
+    float pitch = 0.3f + (1.5f * (main_vehicle.current_engine_rpm / main_vehicle.max_rpm));
+    SetMusicPitch(engine, pitch);
+
+
     update_camera();
     physics_loop();
     render_loop();
@@ -97,6 +109,7 @@ void update_input() {
       main_vehicle.current_gear += 1;
     }
   }
+
 }
 
 void physics_loop() {
@@ -124,6 +137,16 @@ void physics_loop() {
   // calcolo forza che le ruote applicano sul loro bordo
   main_vehicle.current_wheels_force = main_vehicle.current_wheels_torque / main_vehicle.wheel_radius;
 
+  double downforce = main_vehicle.downforce_factor * main_vehicle.current_forward_velocity * abs(main_vehicle.current_forward_velocity);
+  double normal_force = main_vehicle.total_mass * physics::GRAVITATIONAL_FORCE + downforce;
+
+  double max_traction_force = main_vehicle.grip * normal_force;
+  double excess = abs(main_vehicle.current_wheels_force) - max_traction_force;
+  if (excess > 0) {
+    int sign = main_vehicle.current_wheels_force > 0 ? 1 : -1;
+    main_vehicle.current_wheels_force = max_traction_force * sign;
+  }
+
   double aerodynamic_constant = 0.42;
   double air_resistance = aerodynamic_constant * main_vehicle.current_forward_velocity * abs(main_vehicle.current_forward_velocity);
   double mechanical_and_asphalt_friction_constant = 12.0;
@@ -137,7 +160,12 @@ void physics_loop() {
 
   double brake_force = brake_coefficient * main_vehicle.current_brake * temp;
 
-  main_vehicle.current_wheels_force = main_vehicle.current_wheels_force - air_resistance - rolling_resistance - brake_force;
+  double engine_braking = 0.0;
+  if (main_vehicle.current_throttle == 0 && main_vehicle.current_gear != 0) {
+    engine_braking = 500.0 * abs(main_vehicle.current_gear_ratio) * main_vehicle.final_drive * temp;
+  }
+
+  main_vehicle.current_wheels_force = main_vehicle.current_wheels_force - air_resistance - rolling_resistance - brake_force - engine_braking;
 
   // calcolo accelerazione
   main_vehicle.current_forward_acceleration = main_vehicle.current_wheels_force / main_vehicle.total_mass;
@@ -169,15 +197,30 @@ void physics_loop() {
 
   main_vehicle.current_engine_rpm = std::clamp(main_vehicle.current_engine_rpm, idle_rpm, main_vehicle.max_rpm);
 
-  double steer_sensitivity = 0.4;
+  double steer_sensitivity = -0.003;
+  double wheelbase = 2.6;
 
-  main_vehicle.current_rotation.y = main_vehicle.current_rotation.y + (main_vehicle.current_steer * main_vehicle.current_forward_velocity * -steer_sensitivity * delta_time);
+  double speed_steer_factor = 1.0 / (1.0 + abs(main_vehicle.current_forward_velocity) * 0.1);
+  main_vehicle.current_lateral_velocity += main_vehicle.current_steer * main_vehicle.current_forward_velocity * steer_sensitivity * speed_steer_factor;
+
+  double max_lateral_force = main_vehicle.grip * main_vehicle.total_mass * physics::GRAVITATIONAL_FORCE;
+  double lateral_correction = -main_vehicle.current_lateral_velocity * main_vehicle.lateral_stiffness;
+  double lateral_force = std::clamp(lateral_correction, -max_lateral_force, max_lateral_force);
+  main_vehicle.current_lateral_velocity += (lateral_force / main_vehicle.total_mass) * delta_time;
+
+  double grip_damping = 0.6 + 0.3 * (1.0 / (1.0 + abs(main_vehicle.current_forward_velocity) * 0.05));
+  main_vehicle.current_lateral_velocity *= pow(grip_damping, delta_time * 60.0);
+
+  double yaw_rate = main_vehicle.current_lateral_velocity / wheelbase;
+  main_vehicle.current_rotation.y += yaw_rate * delta_time;
 
   main_vehicle.current_forward.x = sin(main_vehicle.current_rotation.y);
   main_vehicle.current_forward.z = cos(main_vehicle.current_rotation.y);
+  main_vehicle.current_right.x = cos(main_vehicle.current_rotation.y);
+  main_vehicle.current_right.z = -sin(main_vehicle.current_rotation.y);
 
-  main_vehicle.current_location.x = main_vehicle.current_location.x + (main_vehicle.current_forward.x * main_vehicle.current_forward_velocity * delta_time);
-  main_vehicle.current_location.z = main_vehicle.current_location.z + (main_vehicle.current_forward.z * main_vehicle.current_forward_velocity * delta_time);
+  main_vehicle.current_location.x += (main_vehicle.current_forward.x * main_vehicle.current_forward_velocity + main_vehicle.current_right.x * main_vehicle.current_lateral_velocity) * delta_time;
+  main_vehicle.current_location.z += (main_vehicle.current_forward.z * main_vehicle.current_forward_velocity + main_vehicle.current_right.z * main_vehicle.current_lateral_velocity) * delta_time;
 
 
   main_vehicle.current_velocity.y = main_vehicle.current_velocity.y - (physics::GRAVITATIONAL_FORCE * delta_time);
@@ -216,6 +259,7 @@ void update_camera() {
 void render_loop() {
   using global::main_vehicle;
   BeginDrawing();
+
   ClearBackground({100, 150, 200});
   BeginMode3D(graphics::camera);
 

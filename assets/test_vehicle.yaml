@@ -1,9 +1,9 @@
 engine:
   max_rpm: 7000.0
-  torque: 320.0
+  max_torque: 320.0
 
 transmission:
-  total_gears: 6
+  total_forward_gears: 6
   gear_ratios:
     - -3.20 # retromarcia
     - 3.80 # 1
