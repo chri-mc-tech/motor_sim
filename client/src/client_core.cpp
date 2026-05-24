@@ -90,14 +90,19 @@ void update_input() {
   using global::main_vehicle;
 
   main_vehicle.current_throttle = 0.0;
-  main_vehicle.current_steer = 0.0;
   main_vehicle.current_brake = 0.0;
 
   if (IsKeyDown(KEY_W)) main_vehicle.current_throttle = 1.0;
   if (IsKeyDown(KEY_S)) main_vehicle.current_brake = 1.0;
 
-  if (IsKeyDown(KEY_A)) main_vehicle.current_steer = -1.0;
-  if (IsKeyDown(KEY_D)) main_vehicle.current_steer = 1.0;
+  double steer_speed = 6.0;
+  double steer_return = 0.0002;
+
+  if (IsKeyDown(KEY_A)) main_vehicle.current_steer -= steer_speed * global::delta_time;
+  else if (IsKeyDown(KEY_D)) main_vehicle.current_steer += steer_speed * global::delta_time;
+  else main_vehicle.current_steer *= pow(steer_return, global::delta_time);
+
+  main_vehicle.current_steer = std::clamp(main_vehicle.current_steer, -1.0, 1.0);
 
   if (IsKeyPressed(KEY_Q)) {
     if (main_vehicle.current_gear > -1) {
@@ -290,5 +295,8 @@ void render_loop() {
 
 
   DrawText(debug_text.c_str(), 0, 0, 20, WHITE);
+
+  int fps = GetFPS();
+  DrawText(std::to_string(fps).c_str(), graphics::window_width - 50, 0, 20, WHITE);
   EndDrawing();
 }
