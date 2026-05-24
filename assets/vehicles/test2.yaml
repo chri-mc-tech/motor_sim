@@ -1,0 +1,141 @@
+# =======================================================================================
+# CONFIGURAZIONE GENERALE DEL VEICOLO (Modello di Esempio)
+# =======================================================================================
+# Questo file serve come base per creare nuovi veicoli nella simulazione.
+# Ogni file presente in questa cartella rappresenta un'auto diversa.
+#
+# REGOLA GENERALE: I valori inseriti qui modificano la fisica in tempo reale.
+# Potete creare qualsiasi tipo di veicolo bilanciando questi quattro reparti:
+# - ENGINE: Il carattere, la spinta e la reattività del motore.
+# - TRANSMISSION: Come la potenza viene distribuita alle ruote (accelerazione vs velocità).
+# - VEHICLE/PHYSICS: Il peso dell'auto, l'aderenza delle gomme e l'aerodinamica.
+# - STEERING: La geometria delle ruote e l'agilità in curva.
+# =======================================================================================
+
+engine:
+  # Giri massimi del motore (Limitatore di giri).
+  # Quando il motore raggiunge questo regime, la spinta si azzera istantaneamente.
+  # Inoltre, la simulazione imposta automaticamente il punto di massima spinta
+  # dell'auto al 75% di questo valore (in questo esempio, a 7500 giri).
+  max_rpm: 10000.0
+
+  # Regime di minimo del motore (Giri al minuto quando non si accelera).
+  # È il regime a cui il motore si stabilizza da fermo. La simulazione impedisce
+  # ai giri di scendere sotto questa soglia, evitando che il motore si spenga.
+  idle_rpm: 1600.0
+
+  # Coppia massima del motore espressa in Newton-metri (Nm).
+  # Rappresenta la forza bruta del motore. Più questo valore è alto, più il motore
+  # ha spinta. La simulazione lo usa per calcolare una curva di potenza realistica,
+  # dove la spinta massima si ha a giri medio-alti e cala se si è troppo bassi o troppo alti.
+  max_torque: 410.0
+
+  # Inerzia del motore (Il peso dei componenti interni in rotazione).
+  # Influenza il comportamento del motore SOLO quando si è in folle.
+  # - Valori bassi (es. 0.1): Il motore è agilissimo, i giri schizzano su appena si sfiora
+  #   il gas e crollano subito quando si rilascia (stile moto o auto da corsa).
+  # - Valori alti (es. 0.4): Il motore sembra pesante e lento a salire e scendere di giri.
+  inertia: 0.15
+
+  # Attrito interno e resistenza meccanica del motore, espresso in Nm.
+  # È la forza frenante naturale del motore. In folle determina la velocità con cui
+  # i giri scendono verso il minimo. In marcia, determina l'intensità del "freno motore":
+  # più il valore è alto, più l'auto decelererà bruscamente quando si rilascia l'acceleratore.
+  friction_torque: 85.0
+
+transmission:
+  # Il numero di marce in avanti disponibili nel cambio.
+  # Impedisce al giocatore di salire oltre questa marcia durante la guida.
+  total_forward_gears: 5
+
+  # Rapporti di trasmissione per ogni singola marcia.
+  # Il primo valore della lista è SEMPRE la retromarcia (deve essere negativo).
+  # I valori successivi sono le marce in avanti (dalla 1ª alla più alta).
+  # - Numeri alti (es. 4.80): Marce corte. Moltiplicano la spinta a tempo per partenze
+  #   brucianti, ma fanno finire subito i giri del motore limitando la velocità.
+  # - Numeri bassi (es. 1.12): Marce lunghe. Meno ripresa, ma permettono di raggiungere
+  #   velocità di punta elevate mantenendo il motore a giri più bassi.
+  # Durante la guida, questi valori collegano rigidamente la velocità delle ruote ai giri motore.
+  gear_ratios:
+    - -4.20 # Retromarcia (il segno meno fa muovere l'auto all'indietro)
+    - 4.80  # 1ª Marcia
+    - 3.20  # 2ª Marcia
+    - 2.10  # 3ª Marcia
+    - 1.55  # 4ª Marcia
+    - 1.12  # 5ª Marcia
+
+  # Rapporto finale del differenziale.
+  # È un moltiplicatore universale che si applica a tutte le marce contemporaneamente.
+  # Aumentarlo rende l'auto più scattante in ogni marcia ma riduce la velocità massima globale.
+  # Diminuirlo fa l'esatto contrario (configurazione da alta velocità).
+  final_drive: 3.90
+
+vehicle:
+  # La massa totale del veicolo espressa in chilogrammi (kg).
+  # Regola l'inerzia della vettura. Un'auto pesante richiede molta più forza per
+  # accelerare e frenare. Il peso viene però sfruttato dalla fisica anche in verticale:
+  # un'auto pesante schiaccia di più le gomme a terra, generando più aderenza iniziale.
+  mass: 960.0
+
+  # Il raggio geometrico delle ruote espresso in metri (es. 0.35 = 35 centimetri).
+  # Trasforma la rotazione meccanica del cambio in movimento lineare sull'asfalto.
+  # - Ruote grandi: Aumentano la velocità di punta ma riducono lo spunto iniziale.
+  # - Ruote piccole: Offrono molta più ripresa ma fanno imballare subito il motore.
+  wheel_radius: 0.35
+
+physics:
+  # Coefficiente di aderenza (aderenza pura degli pneumatici).
+  # Determina il limite fisico oltre il quale l'auto perde trazione.
+  # Se il motore invia alle ruote una forza superiore a questo limite (es. accelerando a tavoletta
+  # in prima marcia), le ruote inizieranno a slittare e la forza in eccesso andrà persa.
+  # Regola anche la tenuta laterale: valori bassi causano vistose sbandate (drift).
+  grip: 0.8
+
+  # Spinta aerodinamica verso il basso (Deportanza generata da alettoni e carrozzeria).
+  # Genera una forza invisibile che schiaccia l'auto a terra. Questa forza aumenta in modo
+  # esponenziale con la velocità: a bassa velocità è quasi impercettibile, ma ad alta velocità
+  # aumenta enormemente l'aderenza delle gomme, permettendo di fare curvoni veloci senza slittare.
+  downforce_factor: 0.03
+
+  # Coefficiente di resistenza all'aria (Penetrazione aerodinamica o Cx).
+  # Determina quanto "muro d'aria" deve spostare la carrozzeria per avanzare.
+  # - Valori bassi (es. 0.25): Auto aerodinamica (supercar), fende l'aria e raggiunge alte velocità.
+  # - Valori alti (es. 0.50): Auto tozza (SUV o camion), l'aria fa da freno invisibile limitando la corsa.
+  aerodynamic_drag: 0.22
+
+  # Resistenza al rotolamento degli pneumatici e attriti meccanici minori.
+  # Rappresenta l'attrito continuo delle gomme che rotolano sul terreno e dei semiassi.
+  # Più questo valore è alto, più l'auto tenderà a rallentare da sola per inerzia quando si viaggia in folle.
+  rolling_resistance: 12.0
+
+  # Forza frenante massima espressa in Newton (N).
+  # Definisce la potenza dei freni quando il pedale (o il grilletto del gamepad) è premuto al 100%.
+  # - Valori alti (es. 30000.0): Freni potentissimi da pista.
+  # - Valori troppo alti rispetto al 'grip': Bloccheranno subito le ruote facendo scivolare l'auto.
+  braking_power: 20000.0
+
+  # Rigidità laterale degli pneumatici.
+  # Regola la prontezza e la severità della risposta della gomma nei trasferimenti di carico laterali.
+  # - Valori alti (es. 5.0): Risposta immediata, l'auto è precisa ma perde aderenza in modo brusco.
+  # - Valori bassi (es. 2.0): Comportamento più morbido, l'auto sbanda in modo più progressivo e controllabile.
+  lateral_stiffness: 3.0
+
+steering:
+  # Il "passo" dell'auto (La distanza in metri tra le ruote anteriori e quelle posteriori).
+  # - Auto a passo corto (es. 2.2): Estremamente agili nello stretto, girano in un fazzoletto
+  #   ma diventano nervose e instabili alle alte velocità.
+  # - Auto a passo lungo (es. 2.8): Molto stabili nei rettilinei e nei curvoni veloci,
+  #   ma più lente e goffe nelle curve strette.
+  wheelbase: 2.3
+
+  # Sensibilità e angolo massimo dello sterzo.
+  # Definisce l'angolo massimo di rotazione delle ruote anteriori quando si sterza al massimo.
+  # Valori più alti permettono di fare curve molto più strette a parità di comando.
+  sensitivity: 0.3
+
+  # Reattività dello sterzo (Velocità di risposta del comando).
+  # Determina quanto velocemente le ruote seguono il comando del comando/tastiera e tornano dritte.
+  # - Valori alti (es. 15.0): Risposta istantanea e tagliente, comportamento da go-kart o Formula 1.
+  # - Valori bassi (es. 6.0): Lo sterzo risulta più pesante, pastoso e lento a rispondere,
+  #   tipico di un camion o di una vecchia auto senza servosterzo.
+  responsiveness: 11.0
