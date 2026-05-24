@@ -1,9 +1,11 @@
 #include "client_core.h"
 
+#include <GLFW/glfw3.h>
 #include <chrono>
 #include <cmath>
 #include <raylib.h>
-#include <GLFW/glfw3.h>
+
+#include "client_ffb.h"
 #include "client_global.h"
 #include "client_logger.h"
 #include "client_physics.h"
@@ -34,7 +36,7 @@ void client_run() {
   auto last = std::chrono::high_resolution_clock::now();
 
 
-
+  HideCursor();
 
   InitAudioDevice();
   Music engine_idle = LoadMusicStream("engine_1600_idle.wav");
@@ -48,6 +50,8 @@ void client_run() {
 
 
   log_debug(GetGamepadName(0));
+
+  ffb_init();
 
 
   while (global::running) {
@@ -75,6 +79,8 @@ void client_run() {
     SetMusicVolume(engine_mid,  vol_mid);
     SetMusicVolume(engine_high, vol_high);
 
+    SetMasterVolume(0.02);
+
     float pitch_idle = 0.8f + rpm_ratio * 0.4f;
     float pitch_mid  = 0.7f + rpm_ratio * 0.6f;
     float pitch_high = 0.6f + rpm_ratio * 0.8f;
@@ -83,8 +89,29 @@ void client_run() {
     SetMusicPitch(engine_mid,  pitch_mid);
     SetMusicPitch(engine_high, pitch_high);
 
+
     update_camera();
     physics::physics_loop();
+
+    float max_lat = main_vehicle.grip * 9.81f * (main_vehicle.lateral_stiffness / 6.0f);
+    float target_lat_vel = -main_vehicle.current_steer * abs(main_vehicle.current_forward_velocity) * main_vehicle.steer_sensitivity;
+
+    float base_ffb = -main_vehicle.current_lateral_velocity * 1.5f;
+
+    float understeer = abs(target_lat_vel) - max_lat;
+    float grip_factor = 1.0f;
+    float understeer_vibration = 0.0f;
+
+    if (understeer > 0.0f && abs(main_vehicle.current_forward_velocity) > 3.0f) {
+      grip_factor = std::max(0.3f, 1.0f - (understeer * 0.2f));
+      understeer_vibration = sin(GetTime() * 160.0f) * 0.25f * std::min(understeer * 0.5f, 1.0f);
+    }
+
+    float ffb_force = (base_ffb * grip_factor) + understeer_vibration;
+    ffb_force = std::clamp(ffb_force, -1.0f, 1.0f);
+
+    ffb_update(ffb_force);
+
     render_loop();
   }
 
@@ -141,24 +168,39 @@ void update_input() {
     }
   }
 
-  if (IsGamepadAvailable(0)) {
-    main_vehicle.current_steer = GetGamepadAxisMovement(0, GAMEPAD_AXIS_LEFT_X); // sterzo, -1 sinistra, 1 destra
-    main_vehicle.current_brake = (GetGamepadAxisMovement(0, GAMEPAD_AXIS_LEFT_TRIGGER) + 1) / 2; // freno, -1 mollato, 1 schiacciato
-    main_vehicle.current_throttle = (GetGamepadAxisMovement(0, GAMEPAD_AXIS_RIGHT_TRIGGER) + 1) / 2; // acceleratore, -1 mollato, 1 schiacciato
+  if (glfwJoystickPresent(GLFW_JOYSTICK_1)) {
+    int count;
+    const float* axes = glfwGetJoystickAxes(GLFW_JOYSTICK_1, &count);
 
-    if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_LEFT_TRIGGER_1)) {
-      if (main_vehicle.current_gear > -1) {
-        main_vehicle.current_gear -= 1;
-      }
+    main_vehicle.current_steer = std::clamp(static_cast<double>(axes[0] * 4), -1.0, 1.0);
+    main_vehicle.current_throttle = 1 - ((axes[1] + 1) / 2);
+    main_vehicle.current_brake = 1 - ((axes[2] + 1) / 2);
+
+    if (main_vehicle.current_forward_velocity < 0.0) {
+      main_vehicle.current_steer = -main_vehicle.current_steer;
     }
-    if (IsGamepadButtonPressed(0, GAMEPAD_BUTTON_RIGHT_TRIGGER_1)) {
+
+    const unsigned char* buttons = glfwGetJoystickButtons(GLFW_JOYSTICK_1, &count);
+
+    static bool paddle_su_premuto = false;
+    static bool paddle_giu_premuto = false;
+
+    if (buttons[4] == GLFW_PRESS && !paddle_su_premuto) {
       if (main_vehicle.current_gear < main_vehicle.total_forward_gears) {
         main_vehicle.current_gear += 1;
       }
     }
+    paddle_su_premuto = (buttons[4] == GLFW_PRESS);
+
+    if (buttons[5] == GLFW_PRESS && !paddle_giu_premuto) {
+      if (main_vehicle.current_gear > -1) {
+        main_vehicle.current_gear -= 1;
+      }
+    }
+    paddle_giu_premuto = (buttons[5] == GLFW_PRESS);
+
 
   }
-
 }
 
 void update_camera() {
