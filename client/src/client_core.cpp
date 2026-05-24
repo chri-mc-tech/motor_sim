@@ -74,9 +74,9 @@ void client_run() {
     SetMusicPitch(engine_low, 0.9f + rpm_ratio * 0.8f);
     SetMusicPitch(engine_high, 0.8f + rpm_ratio * 1.0f);
 
-
-    update_camera();
     physics::physics_loop();
+    update_camera();
+
 
     float max_lat = main_vehicle.grip * 9.81f * (main_vehicle.lateral_stiffness / 6.0f);
     float target_lat_vel = -main_vehicle.current_steer * abs(main_vehicle.current_forward_velocity) * main_vehicle.steer_sensitivity;
@@ -153,55 +153,64 @@ void update_input() {
     }
   }
 
-  if (glfwJoystickPresent(GLFW_JOYSTICK_1)) {
-    int count;
-    const float* axes = glfwGetJoystickAxes(GLFW_JOYSTICK_1, &count);
-
-    int down_gear = 5;
-    int up_gear = 4;
-
-    string gamepad_name = GetGamepadName(GLFW_JOYSTICK_1);
-
-    if (gamepad_name.find("G29") != std::string::npos) {
-      main_vehicle.current_steer = std::clamp(static_cast<double>(axes[0] * 4), -1.0, 1.0);
-      main_vehicle.current_throttle = 1 - ((axes[1] + 1) / 2);
-      main_vehicle.current_brake = 1 - ((axes[2] + 1) / 2);
-
+  if (IsKeyPressed(KEY_G)) {
+    if (global::using_gamepad) {
+      global::using_gamepad = false;
     }
-    else {
-      main_vehicle.current_steer = axes[0];
-      main_vehicle.current_brake = (axes[4] + 1) / 2;
-      main_vehicle.current_throttle = (axes[5] + 1) / 2;
+    else {global::using_gamepad = true;}
+  }
 
-      down_gear = 4;
-      up_gear = 5;
-    }
+  if (global::using_gamepad) {
+    if (glfwJoystickPresent(GLFW_JOYSTICK_1)) {
+      int count;
+      const float* axes = glfwGetJoystickAxes(GLFW_JOYSTICK_1, &count);
 
+      int down_gear = 5;
+      int up_gear = 4;
 
+      string gamepad_name = GetGamepadName(GLFW_JOYSTICK_1);
 
+      if (gamepad_name.find("G29") != std::string::npos) {
+        main_vehicle.current_steer = std::clamp(static_cast<double>(axes[0] * 4), -1.0, 1.0);
+        main_vehicle.current_throttle = 1 - ((axes[1] + 1) / 2);
+        main_vehicle.current_brake = 1 - ((axes[2] + 1) / 2);
 
-    if (main_vehicle.current_forward_velocity < 0.0) {
-      main_vehicle.current_steer = -main_vehicle.current_steer;
-    }
-
-    const unsigned char* buttons = glfwGetJoystickButtons(GLFW_JOYSTICK_1, &count);
-
-    static bool paddle_right_pressed = false;
-    static bool paddle_left_pressed = false;
-
-    if (buttons[up_gear] == GLFW_PRESS && !paddle_right_pressed) {
-      if (main_vehicle.current_gear < main_vehicle.total_forward_gears) {
-        main_vehicle.current_gear += 1;
       }
-    }
-    paddle_right_pressed = (buttons[up_gear] == GLFW_PRESS);
+      else {
+        main_vehicle.current_steer = axes[0];
+        main_vehicle.current_brake = (axes[4] + 1) / 2;
+        main_vehicle.current_throttle = (axes[5] + 1) / 2;
 
-    if (buttons[down_gear] == GLFW_PRESS && !paddle_left_pressed) {
-      if (main_vehicle.current_gear > -1) {
-        main_vehicle.current_gear -= 1;
+        down_gear = 4;
+        up_gear = 5;
       }
+
+
+
+
+      if (main_vehicle.current_forward_velocity < 0.0) {
+        main_vehicle.current_steer = -main_vehicle.current_steer;
+      }
+
+      const unsigned char* buttons = glfwGetJoystickButtons(GLFW_JOYSTICK_1, &count);
+
+      static bool paddle_right_pressed = false;
+      static bool paddle_left_pressed = false;
+
+      if (buttons[up_gear] == GLFW_PRESS && !paddle_right_pressed) {
+        if (main_vehicle.current_gear < main_vehicle.total_forward_gears) {
+          main_vehicle.current_gear += 1;
+        }
+      }
+      paddle_right_pressed = (buttons[up_gear] == GLFW_PRESS);
+
+      if (buttons[down_gear] == GLFW_PRESS && !paddle_left_pressed) {
+        if (main_vehicle.current_gear > -1) {
+          main_vehicle.current_gear -= 1;
+        }
+      }
+      paddle_left_pressed = (buttons[down_gear] == GLFW_PRESS);
     }
-    paddle_left_pressed = (buttons[down_gear] == GLFW_PRESS);
   }
 }
 
