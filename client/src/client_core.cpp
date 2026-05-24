@@ -27,12 +27,16 @@ void client_run() {
   main_vehicle.mesh = GenMeshCube(1.5, 0.8, 2.0);
   main_vehicle.model = LoadModelFromMesh(main_vehicle.mesh);
 
+  /*
   Mesh track_test_mesh = GenMeshCube(100, 0.2, 100);
   global::test_track_model = LoadModelFromMesh(track_test_mesh);
 
   Texture texture = LoadTexture("test_texture.png");
 
   global::test_track_model.materials[0].maps[MATERIAL_MAP_DIFFUSE].texture = texture;
+  */
+
+  global::test_track_model = LoadModel("test_circuit.glb");
 
   auto last = std::chrono::high_resolution_clock::now();
 
@@ -246,19 +250,17 @@ void physics_loop() {
 
   main_vehicle.current_engine_rpm = std::clamp(main_vehicle.current_engine_rpm, main_vehicle.idle_rpm, main_vehicle.max_rpm);
 
-  double steer_sensitivity = -0.003;
+  double steer_sensitivity = 0.3;
   double wheelbase = 2.6;
 
-  double speed_steer_factor = 1.0 / (1.0 + abs(main_vehicle.current_forward_velocity) * 0.1);
-  main_vehicle.current_lateral_velocity += main_vehicle.current_steer * main_vehicle.current_forward_velocity * steer_sensitivity * speed_steer_factor;
+  double target_lat_vel = -main_vehicle.current_steer * abs(main_vehicle.current_forward_velocity) * steer_sensitivity;
 
-  double max_lateral_force = main_vehicle.grip * main_vehicle.total_mass * physics::GRAVITATIONAL_FORCE;
-  double lateral_correction = -main_vehicle.current_lateral_velocity * main_vehicle.lateral_stiffness;
-  double lateral_force = std::clamp(lateral_correction, -max_lateral_force, max_lateral_force);
-  main_vehicle.current_lateral_velocity += (lateral_force / main_vehicle.total_mass) * delta_time;
+  double responsiveness = 12.0;
 
-  double grip_damping = 0.6 + 0.3 * (1.0 / (1.0 + abs(main_vehicle.current_forward_velocity) * 0.05));
-  main_vehicle.current_lateral_velocity *= pow(grip_damping, delta_time * 60.0);
+  main_vehicle.current_lateral_velocity += (target_lat_vel - main_vehicle.current_lateral_velocity) * responsiveness * delta_time;
+
+  double max_lat_limit = main_vehicle.grip * physics::GRAVITATIONAL_FORCE * 0.5;
+  main_vehicle.current_lateral_velocity = std::clamp(main_vehicle.current_lateral_velocity, -max_lat_limit, max_lat_limit);
 
   double yaw_rate = main_vehicle.current_lateral_velocity / wheelbase;
   main_vehicle.current_rotation.y += yaw_rate * delta_time;
@@ -313,7 +315,7 @@ void render_loop() {
   BeginMode3D(graphics::camera);
 
   DrawModel(global::test_track_model, {0, 0, 0}, 1, WHITE);
-  // DrawCube(main_vehicle.location, 1.8, 1.2, 4.5, {20, 20, 100, 255});
+
   DrawModelEx(
       main_vehicle.model,
       main_vehicle.current_location,
@@ -335,6 +337,7 @@ void render_loop() {
                       "\n speed (m/s): " + std::to_string(main_vehicle.current_forward_velocity) +
                       "\n speed (km/h): " + std::to_string(main_vehicle.current_forward_velocity * 3.6) +
                       "\n rpm: " + std::to_string(main_vehicle.current_engine_rpm) +
+                      "\n lateral vel: " + std::to_string(main_vehicle.current_lateral_velocity) +
                       "\n steer: " + std::to_string(main_vehicle.current_steer);
 
 
