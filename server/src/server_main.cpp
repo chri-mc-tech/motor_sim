@@ -32,7 +32,7 @@ int main() {
   }
   log_info("Server configuration loaded successfully");
 
-  if (create_enet_host() != 0) {
+  if (!create_enet_host()) {
     return 6;
   }
 

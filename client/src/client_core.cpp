@@ -141,6 +141,15 @@ void start_graphics() {
 void update_input() {
   using global::main_vehicle;
 
+  // window update
+
+  if (IsWindowResized()) {
+    graphics::window_width = GetScreenWidth();
+    graphics::window_height = GetScreenHeight();
+  }
+
+
+
   main_vehicle.current_throttle = 0.0;
   main_vehicle.current_brake = 0.0;
 

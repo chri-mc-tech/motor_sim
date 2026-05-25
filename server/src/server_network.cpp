@@ -11,7 +11,7 @@
 #include "shared_network.h"
 
 
-int enet_loop() {
+void enet_loop() {
   ENetEvent enet_event;
 
   while (enet_host_service(enet::enet_server, &enet::enet_event, 0) > 0) {
@@ -29,7 +29,6 @@ int enet_loop() {
         break;
     }
   }
-  return 0;
 }
 
 void enet_event_connected() {
@@ -42,14 +41,14 @@ void enet_event_disconnected() {
   log_info("player disconnected: " + enet_ip_to_string(enet::enet_event.peer->address.host));
 }
 
-int create_enet_host() {
+bool create_enet_host() {
   enet::address.port = config::port;
   enet::address.host = config::host;
   enet::enet_server = enet_host_create(&enet::address, config::max_players, 3, 0, 0);
 
   if (enet::enet_server == nullptr) {
-    return 1;
+    return false;
   }
 
-  return 0;
+  return true;
 }

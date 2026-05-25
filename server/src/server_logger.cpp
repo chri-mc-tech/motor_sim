@@ -3,6 +3,8 @@
 #include <filesystem>
 
 #include <iostream>
+
+#include "server_config.h"
 #include "server_global.h"
 #include "shared_utils.h"
 
@@ -59,7 +61,7 @@ void log_error(const string &text) {
 }
 
 void log_debug(const string &text) {
-  if (global::config::debug) {
+  if (config::debug) {
     global::log_file << "[" << get_current_time() << " DEBUG]: " << text << endl;
     cout << "[" << get_current_time() << COLOR_CYAN " DEBUG" << COLOR_RESET << "]: " << COLOR_CYAN << text
          << COLOR_RESET << endl;
