@@ -6,11 +6,15 @@
 #include <raylib.h>
 #include <raymath.h>
 
+#include "client_config.h"
 #include "client_ffb.h"
 #include "client_global.h"
 #include "client_logger.h"
+#include "client_network.h"
 #include "client_physics.h"
+#include "client_ui.h"
 #include "client_vehicles.h"
+#include "shared_utils.h"
 
 void client_run() {
   using global::main_vehicle;
@@ -34,22 +38,20 @@ void client_run() {
   */
 
   main_vehicle.model = LoadModel("test_vehicle.glb");
-
   global::test_track_model = LoadModel("test_circuit.glb");
 
   auto last = std::chrono::high_resolution_clock::now();
 
-
-  HideCursor();
-
   InitAudioDevice();
   Music engine_low = LoadMusicStream("engine_low.wav");
   Music engine_high = LoadMusicStream("engine_high.wav");
-
   PlayMusicStream(engine_low);
   PlayMusicStream(engine_high);
 
   ffb_init();
+
+  graphics::font = LoadFontEx("Archivo-SemiBold.ttf", 64, nullptr, 0);
+  ui::create_all_buttons();
 
 
   while (global::running) {
@@ -231,39 +233,218 @@ void render_loop() {
   using global::main_vehicle;
   BeginDrawing();
 
-  ClearBackground({100, 150, 200});
+  if (global::status_game == STATUS_GAME_PLAYING) {
+    ClearBackground({30, 31, 108});
+  }
+  else {
+    ClearBackground(BLACK);
+  }
+
+  // ClearBackground({ 30, 31, 108, 255 }); // day: SKYBLUE night: 30, 31, 108
   BeginMode3D(graphics::camera);
-
-  DrawModel(global::test_track_model, {0, 0, 0}, 1.1, WHITE);
-
-  DrawModelEx(
-      main_vehicle.model,
-      main_vehicle.current_location,
-      { 0.0f, 1.0f, 0.0f },
-      (main_vehicle.current_rotation.y * RAD2DEG) + 180,
-      { 1.0f, 1.0f, 1.0f },
-      WHITE
-  );
-
+  render_3D();
   EndMode3D();
-  string debug_text = "\n gear: " + std::to_string(main_vehicle.current_gear) +
-                      "\n gear ratio: " + std::to_string(main_vehicle.current_gear_ratio) +
-                      "\n engine max torque: " + std::to_string(main_vehicle.max_engine_torque) +
-                      "\n engine torque: " + std::to_string(main_vehicle.current_engine_torque) +
-                      "\n wheel torque: " + std::to_string(main_vehicle.current_wheels_torque) +
-                      "\n throttle: " + std::to_string(main_vehicle.current_throttle) +
-                      "\n brake: " + std::to_string(main_vehicle.current_brake) +
-                      "\n acceleration: " + std::to_string(main_vehicle.current_forward_acceleration) +
-                      "\n speed (m/s): " + std::to_string(main_vehicle.current_forward_velocity) +
-                      "\n speed (km/h): " + std::to_string(main_vehicle.current_forward_velocity * 3.6) +
-                      "\n rpm: " + std::to_string(main_vehicle.current_engine_rpm) +
-                      "\n lateral vel: " + std::to_string(main_vehicle.current_lateral_velocity) +
-                      "\n steer: " + std::to_string(main_vehicle.current_steer);
+  render_menu();
+
+  EndDrawing();
+}
 
 
-  DrawText(debug_text.c_str(), 0, 0, 20, WHITE);
+void render_3D() {
+
+  using global::main_vehicle;
+
+  if (global::status_game == STATUS_GAME_PLAYING) {
+    DrawModel(global::test_track_model, {0, 0, 0}, 1.1, WHITE);
+
+    DrawModelEx(
+        main_vehicle.model,
+        main_vehicle.current_location,
+        { 0.0f, 1.0f, 0.0f },
+        (main_vehicle.current_rotation.y * RAD2DEG) + 180,
+        { 1.0f, 1.0f, 1.0f },
+        WHITE);
+  }
+}
+
+
+void render_menu() {
+  using global::main_vehicle;
+  using namespace graphics;
+  using global::input_string;
+
+  if (global::status_game == STATUS_GAME_PLAYING) {
+    string debug_text = "\n gear: " + std::to_string(main_vehicle.current_gear) +
+                        "\n gear ratio: " + std::to_string(main_vehicle.current_gear_ratio) +
+                        "\n engine max torque: " + std::to_string(main_vehicle.max_engine_torque) +
+                        "\n engine torque: " + std::to_string(main_vehicle.current_engine_torque) +
+                        "\n wheel torque: " + std::to_string(main_vehicle.current_wheels_torque) +
+                        "\n throttle: " + std::to_string(main_vehicle.current_throttle) +
+                        "\n brake: " + std::to_string(main_vehicle.current_brake) +
+                        "\n acceleration: " + std::to_string(main_vehicle.current_forward_acceleration) +
+                        "\n speed (m/s): " + std::to_string(main_vehicle.current_forward_velocity) +
+                        "\n speed (km/h): " + std::to_string(main_vehicle.current_forward_velocity * 3.6) +
+                        "\n rpm: " + std::to_string(main_vehicle.current_engine_rpm) +
+                        "\n lateral vel: " + std::to_string(main_vehicle.current_lateral_velocity) +
+                        "\n steer: " + std::to_string(main_vehicle.current_steer);
+
+
+    DrawText(debug_text.c_str(), 0, 0, 20, WHITE);
+  }
 
   int fps = GetFPS();
   DrawText(std::to_string(fps).c_str(), graphics::window_width - 50, 0, 20, WHITE);
-  EndDrawing();
+
+
+  switch (global::status_ui) {
+    case STATUS_UI_INPUT_PLAYER_NAME: {
+      get_keyboard_input();
+
+      ui::draw_centered_text("Username:", window_width/2, window_height/2 - 50, WHITE);
+      ui::draw_centered_text(input_string, window_width/2, window_height/2, WHITE);
+      ui::button_continue.render(window_width / 2 - 125, window_height - 70);
+
+      if (is_button_clicked(ui::button_continue) || IsKeyPressed(KEY_ENTER)) {
+        if (shared::utils::is_valid_nickname(input_string)) {
+          config::save_new_nickname(input_string);
+          input_string.clear();
+          global::status_ui = STATUS_UI_MAIN_MENU;
+        }
+      }
+
+      break;
+    }
+    case STATUS_UI_MAIN_MENU: {
+
+      ui::button_singleplayer.render(window_width/2 - 100,window_height/2 - 60);
+      ui::button_multiplayer.render(window_width/2 - 100, window_height/2);
+
+      if (is_button_clicked(ui::button_multiplayer)) {
+        global::status_ui = STATUS_UI_MULTIPLAYER;
+      }
+
+      break;
+    }
+
+    case STATUS_UI_MULTIPLAYER: {
+
+      ui::button_add_server.render(50, window_height - 60);
+      ui::button_remove_server.render(350, window_height - 60);
+      ui::button_direct_connect.render(window_width - 300, window_height - 60);
+
+      if (is_button_clicked(ui::button_direct_connect)) {
+        global::status_ui = STATUS_UI_DIRECT_CONNECT;
+      }
+      break;
+    }
+    case STATUS_UI_DIRECT_CONNECT: {
+      get_keyboard_input();
+
+      ui::draw_centered_text("Server IP:", window_width/2, window_height/2 - 50, WHITE);
+      ui::draw_centered_text(input_string, window_width/2, window_height/2, WHITE);
+      ui::button_continue.render(window_width / 2 - 125, window_height - 70);
+
+      if (is_button_clicked(ui::button_continue) || IsKeyPressed(KEY_ENTER)) {
+        global::status_ui = STATUS_UI_CONNECTING;
+
+        if (input_string.empty()) {
+          connect_to_server("127.0.0.1");
+          break;
+        }
+
+        if (input_string.find(':') == string::npos) {
+          connect_to_server(input_string);
+        }
+        else {
+          auto i = input_string.find(':');
+          string ip = input_string.substr(0, i);
+          string port = input_string.substr(i + 1);
+
+          connect_to_server(ip, port);
+        }
+        input_string.clear();
+      }
+
+      break;
+    }
+
+    case STATUS_UI_CONNECTING: {
+      ui::draw_centered_text("connecting", window_width/2, window_height/2, WHITE);
+      if (std::chrono::steady_clock::now() - global::enet::start_connection_time >= std::chrono::seconds(6)) {
+        if (global::status_connection == STATUS_CONNECTION_NOT_CONNECTED) {
+          global::status_ui = STATUS_UI_DISCONNECTED_FROM_SERVER;
+        }
+      }
+
+      break;
+    }
+
+    case STATUS_UI_DISCONNECTED_FROM_SERVER: {
+      ui::draw_centered_text("Disconnected from server", window_width/2, window_height/2 - 50, WHITE);
+      ui::button_continue.render(window_width / 2 - 125, window_height - 70);
+
+      if (is_button_clicked(ui::button_continue) || IsKeyPressed(KEY_ENTER)) {
+        global::status_ui = STATUS_UI_MAIN_MENU;
+      }
+      break;
+    }
+    case STATUS_UI_PAUSE: {
+      ui::button_settings.render(
+        window_width / 2 - static_cast<int>(ui::button_settings.rect.width / 2),
+        window_height / 2 - static_cast<int>(ui::button_settings.rect.height / 2)
+        );
+      ui::button_quit.render(
+        window_width / 2 - static_cast<int>(ui::button_quit.rect.width / 2),
+        window_height / 2 - static_cast<int>(ui::button_quit.rect.height / 2) + 60
+        );
+
+      if (is_button_clicked(ui::button_settings)) {
+        global::status_ui = STATUS_UI_SETTINGS;
+      }
+      if (is_button_clicked(ui::button_quit)) {
+        enet_peer_disconnect_later(global::enet::connected_server_peer, 0);
+      }
+      break;
+    }
+    case STATUS_UI_SETTINGS: {
+      ui::button_back.render(
+        window_width / 2 - static_cast<int>(ui::button_back.rect.width / 2),
+        window_height - 70
+        );
+
+      if (is_button_clicked(ui::button_back)) {
+        global::status_ui = STATUS_UI_PAUSE;
+      }
+
+      break;
+    }
+    default: break;;
+  }
+}
+
+
+void get_keyboard_input() {
+  using namespace global;
+
+  auto char_pressed = GetCharPressed();
+  auto key_pressed = GetKeyPressed();
+
+  if (key_pressed == KEY_BACKSPACE) {
+    if (!input_string.empty()) {
+      input_string.pop_back();
+    }
+  }
+
+  if (char_pressed != 0) {
+    input_string += static_cast<char>(char_pressed);
+  }
+}
+
+bool is_button_clicked(const ui::Button &button) {
+  if (CheckCollisionPointRec(GetMousePosition(), button.rect)) {
+    if (IsMouseButtonPressed(MOUSE_BUTTON_LEFT)) {
+      return true;
+    }
+  }
+  return false;
 }

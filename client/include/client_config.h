@@ -1,0 +1,20 @@
+#pragma once
+#include <iostream>
+
+using std::string;
+
+namespace config {
+  inline string name;
+  inline bool log_debug;
+  inline bool show_fps;
+  inline bool debug_console;
+}
+
+
+namespace config {
+  bool check();
+  void create_config_file();
+  bool load_config();
+  void save_new_nickname(const std::string& t_string);
+  void add_config_comment(std::ofstream &file_out);
+}

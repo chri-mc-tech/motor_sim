@@ -13,6 +13,10 @@ add_executable(client
         include/client_ffb.h
         src/client_network.cpp
         include/client_network.h
+        src/client_ui.cpp
+        include/client_ui.h
+        src/client_config.cpp
+        include/client_config.h
 
 )
 

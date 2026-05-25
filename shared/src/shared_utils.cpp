@@ -15,6 +15,16 @@ namespace shared::utils {
     return string(buf);
   }
 
+  bool is_valid_nickname(string t_string) {
+    if (t_string.length() < 4) {return false;}
+    if (t_string.length() > 24) {return false;}
+    for (int i = 0; i < t_string.length(); i++) {
+      if (!std::isalnum(t_string[i]) && t_string[i] != '_') {
+        return false;
+      }
+    }
+    return true;
+  }
 
   string packet_to_string(const ENetPacket *packet) {
     string string(reinterpret_cast<char*>(packet->data), packet->dataLength);

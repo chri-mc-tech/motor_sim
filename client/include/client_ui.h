@@ -1,0 +1,36 @@
+#pragma once
+#include <raylib.h>
+#include <string>
+
+namespace ui {
+  class Button {
+  public:
+    Rectangle rect = {};
+    const char *text = nullptr;
+    int font_size = 0;
+    Vector2 text_size = {};
+    void create(int t_width, int t_height, const char *t_text, int t_font_size);
+    void render(int t_x, int t_y);
+  };
+
+  void create_all_buttons();
+
+  // pulsanti
+
+  inline Button button_singleplayer;
+  inline Button button_multiplayer;
+
+  inline Button button_direct_connect;
+  inline Button button_add_server;
+  inline Button button_remove_server;
+
+  inline Button button_continue;
+  inline Button button_back;
+
+  inline Button button_resume;
+  inline Button button_settings;
+  inline Button button_quit;
+
+
+  void draw_centered_text(const std::string &text, int x, int y, Color color);
+}

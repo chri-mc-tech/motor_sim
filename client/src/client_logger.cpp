@@ -8,6 +8,8 @@
 #include <string>
 #include <ctime>
 
+#include "client_config.h"
+
 #ifdef _WIN32
     #include <winsock2.h>
     #include <windows.h>

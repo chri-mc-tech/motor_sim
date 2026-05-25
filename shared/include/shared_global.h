@@ -1,1 +1,19 @@
 #pragma once
+
+// Packets from server: 1-200
+// Packets from client: 201-400
+enum packet_type {
+  PKT_FROM_SERVER_COORDS = 1,
+  PKT_FROM_SERVER_PLAYER_LIST = 2,
+  PKT_FROM_SERVER_A_PLAYER_HAS_CONNECTED = 3,
+  PKT_FROM_SERVER_A_PLAYER_HAS_DISCONNECTED = 4,
+
+  PKT_FROM_CLIENT_NAME = 201,
+  PKT_FROM_CLIENT_CHAT = 202,
+  PKT_FROM_CLIENT_COORDS = 203,
+
+};
+
+enum shared_global {
+  DEFAULT_PORT = 23234
+};
