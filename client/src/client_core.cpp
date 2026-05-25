@@ -24,8 +24,9 @@ void client_run() {
 
   if (vehicles::vehicle_file_exist("test2.yaml")) {
     main_vehicle = vehicles::load_vehicle_from_file("test2.yaml");
+  } else {
+    log_error("file not found");
   }
-  else {log_error("file not found");}
 
   vehicles::vehicle_debug(main_vehicle);
   if (!vehicles::validate_transmission(main_vehicle)) {
@@ -69,9 +70,10 @@ void client_run() {
 
     update_input();
 
-    if (std::chrono::steady_clock::now() >= next_limited_tick)
-    {
-      // funzione limitata
+    if (std::chrono::steady_clock::now() >= next_limited_tick) {
+      enet_loop();
+      send_location();
+      log_debug("aa");
 
       next_limited_tick += limited_tick_interval;
     }
@@ -92,7 +94,8 @@ void client_run() {
 
 
     float max_lat = main_vehicle.grip * 9.81f * (main_vehicle.lateral_stiffness / 6.0f);
-    float target_lat_vel = -main_vehicle.current_steer * abs(main_vehicle.current_forward_velocity) * main_vehicle.steer_sensitivity;
+    float target_lat_vel =
+        -main_vehicle.current_steer * abs(main_vehicle.current_forward_velocity) * main_vehicle.steer_sensitivity;
 
     float base_ffb = -main_vehicle.current_lateral_velocity * 0.8f;
     float understeer = abs(target_lat_vel) - max_lat;
@@ -112,8 +115,6 @@ void client_run() {
     ffb_update(ffb_force);
     render_loop();
   }
-
-
 }
 
 void start_graphics() {
@@ -143,15 +144,20 @@ void update_input() {
   main_vehicle.current_throttle = 0.0;
   main_vehicle.current_brake = 0.0;
 
-  if (IsKeyDown(KEY_W)) main_vehicle.current_throttle = 1.0;
-  if (IsKeyDown(KEY_S)) main_vehicle.current_brake = 1.0;
+  if (IsKeyDown(KEY_W))
+    main_vehicle.current_throttle = 1.0;
+  if (IsKeyDown(KEY_S))
+    main_vehicle.current_brake = 1.0;
 
   double steer_speed = 6.0;
   double steer_return = 0.0002;
 
-  if (IsKeyDown(KEY_A)) main_vehicle.current_steer -= steer_speed * global::delta_time;
-  else if (IsKeyDown(KEY_D)) main_vehicle.current_steer += steer_speed * global::delta_time;
-  else main_vehicle.current_steer *= pow(steer_return, global::delta_time);
+  if (IsKeyDown(KEY_A))
+    main_vehicle.current_steer -= steer_speed * global::delta_time;
+  else if (IsKeyDown(KEY_D))
+    main_vehicle.current_steer += steer_speed * global::delta_time;
+  else
+    main_vehicle.current_steer *= pow(steer_return, global::delta_time);
 
   main_vehicle.current_steer = std::clamp(main_vehicle.current_steer, -1.0, 1.0);
 
@@ -169,14 +175,15 @@ void update_input() {
   if (IsKeyPressed(KEY_G)) {
     if (global::using_gamepad) {
       global::using_gamepad = false;
+    } else {
+      global::using_gamepad = true;
     }
-    else {global::using_gamepad = true;}
   }
 
   if (global::using_gamepad) {
     if (glfwJoystickPresent(GLFW_JOYSTICK_1)) {
       int count;
-      const float* axes = glfwGetJoystickAxes(GLFW_JOYSTICK_1, &count);
+      const float *axes = glfwGetJoystickAxes(GLFW_JOYSTICK_1, &count);
 
       int down_gear = 5;
       int up_gear = 4;
@@ -188,8 +195,7 @@ void update_input() {
         main_vehicle.current_throttle = 1 - ((axes[1] + 1) / 2);
         main_vehicle.current_brake = 1 - ((axes[2] + 1) / 2);
 
-      }
-      else {
+      } else {
         main_vehicle.current_steer = axes[0];
         main_vehicle.current_brake = (axes[4] + 1) / 2;
         main_vehicle.current_throttle = (axes[5] + 1) / 2;
@@ -199,13 +205,11 @@ void update_input() {
       }
 
 
-
-
       if (main_vehicle.current_forward_velocity < 0.0) {
         main_vehicle.current_steer = -main_vehicle.current_steer;
       }
 
-      const unsigned char* buttons = glfwGetJoystickButtons(GLFW_JOYSTICK_1, &count);
+      const unsigned char *buttons = glfwGetJoystickButtons(GLFW_JOYSTICK_1, &count);
 
       static bool paddle_right_pressed = false;
       static bool paddle_left_pressed = false;
@@ -230,13 +234,12 @@ void update_input() {
 void update_camera() {
   using global::main_vehicle;
 
-  Vector3 localOffset = { 0.0f, 2.0f, -3.8f };
-  Vector3 localTarget = { 0.0f, 1.8f, 2.0f };
+  Vector3 localOffset = {0.0f, 2.0f, -3.8f};
+  Vector3 localTarget = {0.0f, 1.8f, 2.0f};
   Matrix mat = MatrixRotateY(main_vehicle.current_rotation.y);
 
   graphics::camera.position = Vector3Add(main_vehicle.current_location, Vector3Transform(localOffset, mat));
   graphics::camera.target = Vector3Add(main_vehicle.current_location, Vector3Transform(localTarget, mat));
-
 }
 
 
@@ -246,8 +249,7 @@ void render_loop() {
 
   if (global::status_game == STATUS_GAME_PLAYING) {
     ClearBackground({30, 31, 108});
-  }
-  else {
+  } else {
     ClearBackground(BLACK);
   }
 
@@ -268,13 +270,8 @@ void render_3D() {
   if (global::status_game == STATUS_GAME_PLAYING) {
     DrawModel(global::test_track_model, {0, 0, 0}, 1.1, WHITE);
 
-    DrawModelEx(
-        main_vehicle.model,
-        main_vehicle.current_location,
-        { 0.0f, 1.0f, 0.0f },
-        (main_vehicle.current_rotation.y * RAD2DEG) + 180,
-        { 1.0f, 1.0f, 1.0f },
-        WHITE);
+    DrawModelEx(main_vehicle.model, main_vehicle.current_location, {0.0f, 1.0f, 0.0f},
+                (main_vehicle.current_rotation.y * RAD2DEG) + 180, {1.0f, 1.0f, 1.0f}, WHITE);
   }
 }
 
@@ -311,8 +308,8 @@ void render_menu() {
     case STATUS_UI_INPUT_PLAYER_NAME: {
       get_keyboard_input();
 
-      ui::draw_centered_text("Username:", window_width/2, window_height/2 - 50, WHITE);
-      ui::draw_centered_text(input_string, window_width/2, window_height/2, WHITE);
+      ui::draw_centered_text("Username:", window_width / 2, window_height / 2 - 50, WHITE);
+      ui::draw_centered_text(input_string, window_width / 2, window_height / 2, WHITE);
       ui::button_continue.render(window_width / 2 - 125, window_height - 70);
 
       if (is_button_clicked(ui::button_continue) || IsKeyPressed(KEY_ENTER)) {
@@ -327,8 +324,8 @@ void render_menu() {
     }
     case STATUS_UI_MAIN_MENU: {
 
-      ui::button_singleplayer.render(window_width/2 - 100,window_height/2 - 60);
-      ui::button_multiplayer.render(window_width/2 - 100, window_height/2);
+      ui::button_singleplayer.render(window_width / 2 - 100, window_height / 2 - 60);
+      ui::button_multiplayer.render(window_width / 2 - 100, window_height / 2);
 
       if (is_button_clicked(ui::button_multiplayer)) {
         global::status_ui = STATUS_UI_MULTIPLAYER;
@@ -351,8 +348,8 @@ void render_menu() {
     case STATUS_UI_DIRECT_CONNECT: {
       get_keyboard_input();
 
-      ui::draw_centered_text("Server IP:", window_width/2, window_height/2 - 50, WHITE);
-      ui::draw_centered_text(input_string, window_width/2, window_height/2, WHITE);
+      ui::draw_centered_text("Server IP:", window_width / 2, window_height / 2 - 50, WHITE);
+      ui::draw_centered_text(input_string, window_width / 2, window_height / 2, WHITE);
       ui::button_continue.render(window_width / 2 - 125, window_height - 70);
 
       if (is_button_clicked(ui::button_continue) || IsKeyPressed(KEY_ENTER)) {
@@ -365,8 +362,7 @@ void render_menu() {
 
         if (input_string.find(':') == string::npos) {
           connect_to_server(input_string);
-        }
-        else {
+        } else {
           auto i = input_string.find(':');
           string ip = input_string.substr(0, i);
           string port = input_string.substr(i + 1);
@@ -380,8 +376,8 @@ void render_menu() {
     }
 
     case STATUS_UI_CONNECTING: {
-      ui::draw_centered_text("connecting", window_width/2, window_height/2, WHITE);
-      if (std::chrono::steady_clock::now() - global::enet::start_connection_time >= std::chrono::seconds(6)) {
+      ui::draw_centered_text("connecting", window_width / 2, window_height / 2, WHITE);
+      if (std::chrono::steady_clock::now() - enet::start_connection_time >= std::chrono::seconds(6)) {
         if (global::status_connection == STATUS_CONNECTION_NOT_CONNECTED) {
           global::status_ui = STATUS_UI_DISCONNECTED_FROM_SERVER;
         }
@@ -391,7 +387,7 @@ void render_menu() {
     }
 
     case STATUS_UI_DISCONNECTED_FROM_SERVER: {
-      ui::draw_centered_text("Disconnected from server", window_width/2, window_height/2 - 50, WHITE);
+      ui::draw_centered_text("Disconnected from server", window_width / 2, window_height / 2 - 50, WHITE);
       ui::button_continue.render(window_width / 2 - 125, window_height - 70);
 
       if (is_button_clicked(ui::button_continue) || IsKeyPressed(KEY_ENTER)) {
@@ -400,28 +396,21 @@ void render_menu() {
       break;
     }
     case STATUS_UI_PAUSE: {
-      ui::button_settings.render(
-        window_width / 2 - static_cast<int>(ui::button_settings.rect.width / 2),
-        window_height / 2 - static_cast<int>(ui::button_settings.rect.height / 2)
-        );
-      ui::button_quit.render(
-        window_width / 2 - static_cast<int>(ui::button_quit.rect.width / 2),
-        window_height / 2 - static_cast<int>(ui::button_quit.rect.height / 2) + 60
-        );
+      ui::button_settings.render(window_width / 2 - static_cast<int>(ui::button_settings.rect.width / 2),
+                                 window_height / 2 - static_cast<int>(ui::button_settings.rect.height / 2));
+      ui::button_quit.render(window_width / 2 - static_cast<int>(ui::button_quit.rect.width / 2),
+                             window_height / 2 - static_cast<int>(ui::button_quit.rect.height / 2) + 60);
 
       if (is_button_clicked(ui::button_settings)) {
         global::status_ui = STATUS_UI_SETTINGS;
       }
       if (is_button_clicked(ui::button_quit)) {
-        enet_peer_disconnect_later(global::enet::connected_server_peer, 0);
+        enet_peer_disconnect_later(enet::connected_server_peer, 0);
       }
       break;
     }
     case STATUS_UI_SETTINGS: {
-      ui::button_back.render(
-        window_width / 2 - static_cast<int>(ui::button_back.rect.width / 2),
-        window_height - 70
-        );
+      ui::button_back.render(window_width / 2 - static_cast<int>(ui::button_back.rect.width / 2), window_height - 70);
 
       if (is_button_clicked(ui::button_back)) {
         global::status_ui = STATUS_UI_PAUSE;
@@ -429,7 +418,9 @@ void render_menu() {
 
       break;
     }
-    default: break;;
+    default:
+      break;
+      ;
   }
 }
 

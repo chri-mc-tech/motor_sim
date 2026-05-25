@@ -14,6 +14,4 @@ enum packet_type {
 
 };
 
-enum shared_global {
-  DEFAULT_PORT = 23234
-};
+enum shared_global { DEFAULT_PORT = 23234 };

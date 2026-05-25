@@ -22,8 +22,7 @@ int main() {
       log_error("Error creating config file");
       return 4;
     }
-  }
-  else {
+  } else {
     log_info("Config file found, loading...");
   }
 

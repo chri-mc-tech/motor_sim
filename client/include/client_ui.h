@@ -33,4 +33,4 @@ namespace ui {
 
 
   void draw_centered_text(const std::string &text, int x, int y, Color color);
-}
+} // namespace ui

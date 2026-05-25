@@ -13,7 +13,7 @@ namespace config {
 
     try {
       Node config = LoadFile("config.yaml");
-    } catch (const BadFile&) {
+    } catch (const BadFile &) {
       return false;
     }
     return true;
@@ -36,7 +36,6 @@ namespace config {
     file_out << config;
     file_out.close();
     log_info("config file created");
-
   }
 
   bool load_config() {
@@ -50,7 +49,7 @@ namespace config {
     return true;
   }
 
-  void save_new_nickname(const std::string& t_string) {
+  void save_new_nickname(const std::string &t_string) {
     using namespace YAML;
     using std::ofstream;
 
@@ -69,6 +68,5 @@ namespace config {
     using std::ofstream;
     file_out << "# Client configuration file\n";
     file_out << "# idk \n";
-
   }
-}
+} // namespace config

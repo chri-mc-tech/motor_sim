@@ -15,10 +15,9 @@ public:
 
 namespace commands {
   void register_commands();
-  void process_command(const string &command, const string& args = "");
+  void process_command(const string &command, const string &args = "");
 
   void cmd_help(string args = "");
   void cmd_list(string args = "");
   // void cmd_kick(string args = "");
-}
-
+} // namespace commands

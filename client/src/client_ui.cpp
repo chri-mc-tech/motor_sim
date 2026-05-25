@@ -15,13 +15,9 @@ namespace ui {
 
     DrawRectangleRounded(rect, 0.5, 10, GRAY);
     DrawTextEx(graphics::font, text,
-      {
-        rect.x + ((rect.width - text_size.x) / 2),
-        rect.y + ((rect.height - text_size.y) / 2)
-      },
-      font_size, 0.5, WHITE);
+               {rect.x + ((rect.width - text_size.x) / 2), rect.y + ((rect.height - text_size.y) / 2)}, font_size, 0.5,
+               WHITE);
   }
-
 
 
   void create_all_buttons() {
@@ -46,7 +42,6 @@ namespace ui {
     button_settings.create(250, 40, "Settings", 32);
 
     button_quit.create(150, 40, "Quit", 32);
-
   }
 
   void draw_centered_text(const string &text, int x, int y, Color color) {
@@ -54,9 +49,7 @@ namespace ui {
 
     Vector2 size = MeasureTextEx(font, text.c_str(), 32, 0.5);
 
-    DrawTextEx(font, text.c_str(),
-  {x - (size.x / 2), y - (size.y / 2)},
-  32, 0.5, color);
+    DrawTextEx(font, text.c_str(), {x - (size.x / 2), y - (size.y / 2)}, 32, 0.5, color);
   }
 
-}
+} // namespace ui

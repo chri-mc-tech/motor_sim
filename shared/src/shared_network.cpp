@@ -20,17 +20,19 @@ namespace shared::network {
     return string_type;
   }
 
-  bool send_packet(ENetPeer* peer, const int pkt_type, const string input_string, const int flag) {
+  bool send_packet(ENetPeer *peer, const int pkt_type, const string input_string, const int flag) {
     string to_send = network::pkt_type(pkt_type) + input_string;
 
     ENetPacket *temp_packet = enet_packet_create(to_send.c_str(), to_send.length(), flag);
-    if (enet_peer_send(peer, 0, temp_packet) == 0) {return true;}
+    if (enet_peer_send(peer, 0, temp_packet) == 0) {
+      return true;
+    }
 
     enet_packet_destroy(temp_packet);
     return false;
   }
 
-  int get_pkt_type(const string& pkt_string) {
+  int get_pkt_type(const string &pkt_string) {
     return stoi(pkt_string.substr(pkt_string.find('[') + 1, pkt_string.find(']') - pkt_string.find('[') - 1));
   }
-}
+} // namespace shared::network

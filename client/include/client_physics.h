@@ -5,4 +5,4 @@ namespace physics {
 
   void physics_loop();
 
-}
+} // namespace physics

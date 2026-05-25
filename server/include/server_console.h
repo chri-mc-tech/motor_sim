@@ -4,4 +4,4 @@
 namespace console {
   // async function
   void console();
-}
+} // namespace console

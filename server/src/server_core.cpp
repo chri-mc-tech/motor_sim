@@ -23,13 +23,10 @@ void server_run() {
     global::delta_time = std::chrono::duration<double>(now - last).count();
     last = now;
 
-    if (std::chrono::steady_clock::now() >= next_limited_tick)
-    {
-      // funzione limitata
+    if (std::chrono::steady_clock::now() >= next_limited_tick) {
+      enet_loop();
 
       next_limited_tick += limited_tick_interval;
     }
-
   }
 }
-

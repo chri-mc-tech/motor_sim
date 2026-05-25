@@ -62,7 +62,7 @@ public:
 
 namespace vehicles {
   bool validate_transmission(const Vehicle &t_vehicle);
-  bool vehicle_file_exist(const string& file_name);
-  Vehicle load_vehicle_from_file(const string & file_name);
+  bool vehicle_file_exist(const string &file_name);
+  Vehicle load_vehicle_from_file(const string &file_name);
   void vehicle_debug(const Vehicle &t_vehicle);
-}
+} // namespace vehicles

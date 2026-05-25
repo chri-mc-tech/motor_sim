@@ -18,7 +18,7 @@ int main() {
     return 5;
   }
 
-  if (create_enet_host() != 0) {
+  if (!create_enet_host()) {
     return 6;
   }
 
@@ -27,10 +27,9 @@ int main() {
     global::status_ui = STATUS_UI_MAIN_MENU;
   }
 
-  global::status_game = STATUS_GAME_PLAYING;
-  global::status_ui = STATUS_UI_VOID;
 
   start_graphics();
   client_run();
+  // end
   ffb_close();
 }

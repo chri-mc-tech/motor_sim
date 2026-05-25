@@ -40,18 +40,14 @@ enum status_game {
   STATUS_GAME_PLAYING,
 };
 
-enum debug_menu {
-  DEBUG_MENU_CLOSED,
-  DEBUG_MENU_DEFAULT,
-  DEBUG_MENU_ADVANCED
-};
+enum debug_menu { DEBUG_MENU_CLOSED, DEBUG_MENU_DEFAULT, DEBUG_MENU_ADVANCED };
 
 namespace graphics {
   inline Camera3D camera;
   inline int window_width = 1280;
   inline int window_height = 720;
   inline Font font;
-}
+} // namespace graphics
 
 namespace global {
   inline bool running;
@@ -71,11 +67,12 @@ namespace global {
 
   inline std::unordered_map<string, Player> online_players;
 
-}
+} // namespace global
 
 
-namespace global::enet {
-  inline ENetHost* enet_client = nullptr;
-  inline ENetPeer* connected_server_peer;
+namespace enet {
+  inline ENetHost *enet_client = nullptr;
+  inline ENetPeer *connected_server_peer;
   inline std::chrono::time_point<std::chrono::steady_clock> start_connection_time;
-}
+  inline ENetEvent enet_event;
+} // namespace enet

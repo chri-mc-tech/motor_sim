@@ -1,4 +1,4 @@
-  #include "server_commands.h"
+#include "server_commands.h"
 
 #include <string>
 #include <unordered_set>
@@ -35,23 +35,20 @@ namespace commands {
     */
   }
 
-  void process_command(const std::string &command, const string& args) {
+  void process_command(const std::string &command, const string &args) {
     if (command_list.contains(command)) {
       command_list.find(command)->second.execute(args);
-    }
-    else {
+    } else {
       log_error("command not found: \"" + command + "\"");
     }
-
   }
 
   void cmd_help(string args) {
     string temp;
-    for (const auto& i : command_list) {
+    for (const auto &i: command_list) {
       if (temp.empty()) {
         temp = i.first;
-      }
-      else {
+      } else {
         temp += ", " + i.first;
       }
     }
@@ -60,18 +57,16 @@ namespace commands {
 
   void cmd_list(string args) {
     string temp;
-    for (auto i : global::online_players) {
+    for (auto i: global::online_players) {
       if (temp.empty()) {
         temp = i.second.name;
-      }
-      else {
+      } else {
         temp += ", " + i.second.name;
       }
     }
     if (temp.empty()) {
       log_info("none");
-    }
-    else {
+    } else {
       log_info(temp);
     }
   }
@@ -95,4 +90,4 @@ namespace commands {
 
     }
   }*/
-}
+} // namespace commands
