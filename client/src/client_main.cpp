@@ -27,6 +27,9 @@ int main() {
     global::status_ui = STATUS_UI_MAIN_MENU;
   }
 
+  global::status_game = STATUS_GAME_PLAYING;
+  global::status_ui = STATUS_UI_VOID;
+
   start_graphics();
   client_run();
   ffb_close();
