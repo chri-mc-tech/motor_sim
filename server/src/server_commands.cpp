@@ -28,10 +28,11 @@ namespace commands {
     list.command = cmd_list;
     command_list["list"] = list;
 
+    /*
     Command kick;
     kick.command = cmd_kick;
     command_list["kick"] = kick;
-
+    */
   }
 
   void process_command(const std::string &command, const string& args) {

@@ -5,7 +5,7 @@
 #include <iostream>
 #include <thread>
 
-#include "../include/server_config.h"
+#include "server_config.h"
 #include "server_console.h"
 #include "server_global.h"
 #include "server_network.h"

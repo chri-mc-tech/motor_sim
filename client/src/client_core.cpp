@@ -42,6 +42,10 @@ void client_run() {
 
   auto last = std::chrono::high_resolution_clock::now();
 
+  constexpr int LIMITED_TICKRATE = 50;
+  const auto limited_tick_interval = std::chrono::microseconds(1000000 / LIMITED_TICKRATE);
+  auto next_limited_tick = std::chrono::steady_clock::now();
+
   InitAudioDevice();
   Music engine_low = LoadMusicStream("engine_low.wav");
   Music engine_high = LoadMusicStream("engine_high.wav");
@@ -64,6 +68,13 @@ void client_run() {
     last = now;
 
     update_input();
+
+    if (std::chrono::steady_clock::now() >= next_limited_tick)
+    {
+      // funzione limitata
+
+      next_limited_tick += limited_tick_interval;
+    }
 
     UpdateMusicStream(engine_low);
     UpdateMusicStream(engine_high);

@@ -19,6 +19,6 @@ namespace commands {
 
   void cmd_help(string args = "");
   void cmd_list(string args = "");
-  void cmd_kick(string args = "");
+  // void cmd_kick(string args = "");
 }
 

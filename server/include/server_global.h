@@ -27,6 +27,7 @@ namespace global {
 namespace global::enet {
   inline ENetHost* enet_server = nullptr;
   inline ENetAddress address;
+  inline ENetEvent enet_event;
 }
 
 namespace global::config {
