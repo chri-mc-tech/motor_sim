@@ -44,25 +44,25 @@ void create_log_file() {
 }
 
 void log_info(const string &text) {
-  global::log_file << "[" << get_current_time() << " INFO]: " << text << endl;
+  //global::log_file << "[" << get_current_time() << " INFO]: " << text << endl;
   cout << "[" << get_current_time() << COLOR_GREEN " INFO" << COLOR_RESET << "]: " << text << COLOR_RESET << endl;
 }
 
 void log_warn(const string &text) {
-  global::log_file << "[" << get_current_time() << " WARN]: " << text << endl;
+  //global::log_file << "[" << get_current_time() << " WARN]: " << text << endl;
   cout << "[" << get_current_time() << COLOR_YELLOW " WARN" << COLOR_RESET << "]: " << COLOR_YELLOW << text
        << COLOR_RESET << endl;
 }
 
 void log_error(const string &text) {
-  global::log_file << "[" << get_current_time() << " ERROR]: " << text << endl;
+  //global::log_file << "[" << get_current_time() << " ERROR]: " << text << endl;
   cout << "[" << get_current_time() << COLOR_RED " ERROR" << COLOR_RESET << "]: " << COLOR_RED << text << COLOR_RESET
        << endl;
 }
 
 void log_debug(const string &text) {
   if (config::debug) {
-    global::log_file << "[" << get_current_time() << " DEBUG]: " << text << endl;
+    //global::log_file << "[" << get_current_time() << " DEBUG]: " << text << endl;
     cout << "[" << get_current_time() << COLOR_CYAN " DEBUG" << COLOR_RESET << "]: " << COLOR_CYAN << text
          << COLOR_RESET << endl;
   }

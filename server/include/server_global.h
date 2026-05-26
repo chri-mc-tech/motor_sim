@@ -9,8 +9,8 @@ class Player {
 public:
   std::string name;
   float pos_x = 0;
-  float pos_Y = 0;
-  float rotation_y = 0;
+  float pos_z = 0;
+  float rot_y = 0;
   ENetPeer *peer;
 };
 
@@ -19,7 +19,6 @@ namespace global {
   inline bool running;
   inline std::ofstream log_file;
   inline std::unordered_map<std::string, Player> online_players;
-  inline std::unordered_map<ENetPeer *, std::string> peer_to_uuid;
   inline double delta_time;
 
 } // namespace global

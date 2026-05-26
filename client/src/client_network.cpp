@@ -54,6 +54,7 @@ void enet_event_connected() {
   enet_peer_send(enet::connected_server_peer, 0, temp_packet);
 }
 
+
 void enet_event_receive() {
   string pkt_data_string = shared::utils::packet_to_string(enet::enet_event.packet);
 
@@ -64,10 +65,37 @@ void enet_event_receive() {
       size_t start = 0;
       while (start < pkt_data_string.size()) {
         size_t end = pkt_data_string.find(';', start);
-        if (end == string::npos)
+        if (end == string::npos) {
           end = pkt_data_string.size();
-
+        }
         string player_object = pkt_data_string.substr(start, end - start);
+
+        std::stringstream ss(player_object);
+        string name, loc_x, loc_z, rot_y;
+
+        if (!(ss >> name >> loc_x >> loc_z >> rot_y)) {
+          start = end + 1;
+          continue;
+        }
+
+        auto i = global::online_players.find(name);
+
+        if (i == global::online_players.end()) {
+          Player temp_player;
+          temp_player.name = name;
+          temp_player.pos_x = stof(loc_x);
+          temp_player.pos_z = stof(loc_z);
+          temp_player.rot_y = stof(rot_y);
+          global::online_players.emplace(name, std::move(temp_player));
+          log_debug("connected: " + name);
+        }
+        else {
+          Player* temp_player = &i->second;
+          temp_player->pos_x = stof(loc_x);
+          temp_player->pos_z = stof(loc_z);
+          temp_player->rot_y = stof(rot_y);
+        }
+        start = end + 1;
       }
     }
     default:
@@ -99,9 +127,13 @@ void send_location() {
   if (global::status_game == STATUS_GAME_PLAYING) {
     float x = global::main_vehicle.current_location.x;
     float z = global::main_vehicle.current_location.z;
+    float rot = global::main_vehicle.current_rotation.y;
 
-    const string to_send = std::to_string(x).substr(0, std::to_string(x).find('.') + 3) + " " +
-                           std::to_string(z).substr(0, std::to_string(z).find('.') + 3);
+    using std::to_string;
+
+    const string to_send = to_string(x).substr(0, to_string(x).find('.') + 3) + " " +
+                           to_string(z).substr(0, to_string(z).find('.') + 3) + " " +
+                           to_string(rot).substr(0, to_string(rot).find('.') + 3);
 
     shared::network::send_packet(enet::connected_server_peer, PKT_FROM_CLIENT_COORDS, to_send, 0);
   }

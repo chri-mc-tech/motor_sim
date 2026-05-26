@@ -44,6 +44,6 @@ int main() {
   log_debug("Debug mode enabled");
 
   jthread thread_console(console::console);
-  create_log_file();
+  // create_log_file();
   server_run();
 }

@@ -3,6 +3,16 @@
 
 using std::string;
 
+string get_name_from_peer() {
+  for (auto temp_player: global::online_players) {
+    if (temp_player.second.peer->connectID == enet::enet_event.peer->connectID) {
+      return temp_player.first;
+    }
+  }
+    return "";
+
+}
+
 Player *get_player_from_name(const string &name) {
   for (auto &temp: global::online_players) {
     if (temp.second.name == name) {

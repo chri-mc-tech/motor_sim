@@ -11,8 +11,8 @@ class Player {
 public:
   string name;
   float pos_x = 0;
-  float pos_Y = 0;
-  float rotation_y = 0;
+  float pos_z = 0;
+  float rot_y = 0;
 };
 
 enum status_connection {

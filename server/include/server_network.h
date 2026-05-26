@@ -8,7 +8,4 @@ void enet_event_connected();
 void enet_event_receive();
 void enet_event_disconnected();
 bool create_enet_host();
-void send_players_location();
-void send_player_list(ENetPeer *peer);
-void send_a_player_has_connected(Player *connected_player);
-void send_a_player_has_disconnected(std::string uuid);
+void send_coords();

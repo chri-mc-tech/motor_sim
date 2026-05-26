@@ -283,6 +283,13 @@ void render_3D() {
 
     DrawModelEx(main_vehicle.model, main_vehicle.current_location, {0.0f, 1.0f, 0.0f},
                 (main_vehicle.current_rotation.y * RAD2DEG) + 180, {1.0f, 1.0f, 1.0f}, WHITE);
+
+    for (auto temp_player: global::online_players) {
+      if (temp_player.first != config::name) {
+        DrawModelEx(main_vehicle.model, {temp_player.second.pos_x, 0, temp_player.second.pos_z}, {0.0f, 1.0f, 0.0f},
+                  (temp_player.second.rot_y * RAD2DEG) + 180, {1.0f, 1.0f, 1.0f}, WHITE);
+      }
+    }
   }
 }
 
