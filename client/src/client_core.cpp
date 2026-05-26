@@ -73,7 +73,6 @@ void client_run() {
     if (std::chrono::steady_clock::now() >= next_limited_tick) {
       enet_loop();
       send_location();
-      log_debug("aa");
 
       next_limited_tick += limited_tick_interval;
     }
@@ -243,8 +242,11 @@ void update_input() {
 void update_camera() {
   using global::main_vehicle;
 
-  Vector3 localOffset = {0.0f, 2.0f, -3.8f};
-  Vector3 localTarget = {0.0f, 1.8f, 2.0f};
+  // Vector3 localOffset = {0.0f, 2.0f, -3.8f};
+  // Vector3 localTarget = {0.0f, 1.8f, 2.0f};
+
+  Vector3 localOffset = {0.0f, 1.0f, 1.2f};
+  Vector3 localTarget = {0.0f, 1.0f, 2.0f};
   Matrix mat = MatrixRotateY(main_vehicle.current_rotation.y);
 
   graphics::camera.position = Vector3Add(main_vehicle.current_location, Vector3Transform(localOffset, mat));
@@ -312,7 +314,6 @@ void render_menu() {
   int fps = GetFPS();
   DrawText(std::to_string(fps).c_str(), graphics::window_width - 50, 0, 20, WHITE);
 
-
   switch (global::status_ui) {
     case STATUS_UI_INPUT_PLAYER_NAME: {
       get_keyboard_input();
@@ -360,6 +361,7 @@ void render_menu() {
       ui::draw_centered_text("Server IP:", window_width / 2, window_height / 2 - 50, WHITE);
       ui::draw_centered_text(input_string, window_width / 2, window_height / 2, WHITE);
       ui::button_continue.render(window_width / 2 - 125, window_height - 70);
+
 
       if (is_button_clicked(ui::button_continue) || IsKeyPressed(KEY_ENTER)) {
         global::status_ui = STATUS_UI_CONNECTING;

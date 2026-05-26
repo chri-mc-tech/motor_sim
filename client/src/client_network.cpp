@@ -46,6 +46,8 @@ void enet_loop() {
 void enet_event_connected() {
   log_debug("connected");
   global::status_connection = STATUS_CONNECTION_CONNECTED;
+  global::status_ui = STATUS_UI_IN_GAME;
+  global::status_game = STATUS_GAME_PLAYING ;
 
   string to_send = shared::network::pkt_type(PKT_FROM_CLIENT_NAME) + config::name;
   ENetPacket *temp_packet = enet_packet_create(to_send.c_str(), to_send.length(), ENET_PACKET_FLAG_RELIABLE);
