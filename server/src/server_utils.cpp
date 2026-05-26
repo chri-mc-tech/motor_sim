@@ -1,4 +1,7 @@
 #include "server_utils.h"
+
+#include <cstdint>
+
 #include "server_global.h"
 
 using std::string;

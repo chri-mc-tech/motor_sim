@@ -1,11 +1,13 @@
 #pragma once
 #include <chrono>
-#include <enet/enet.h>
 #include <fstream>
 #include <raylib.h>
 #include <unordered_map>
 
 #include "client_vehicles.h"
+
+struct _ENetHost;
+struct _ENetPeer;
 
 class Player {
 public:
@@ -71,8 +73,7 @@ namespace global {
 
 
 namespace enet {
-  inline ENetHost *enet_client = nullptr;
-  inline ENetPeer *connected_server_peer;
+  inline _ENetHost* enet_client = nullptr;
+  inline _ENetPeer* connected_server_peer = nullptr;
   inline std::chrono::time_point<std::chrono::steady_clock> start_connection_time;
-  inline ENetEvent enet_event;
-} // namespace enet
+}

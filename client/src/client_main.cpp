@@ -6,7 +6,6 @@
 #include "client_network.h"
 
 int main() {
-
   if (!config::check()) {
     log_info("no config file found");
     config::create_config_file();

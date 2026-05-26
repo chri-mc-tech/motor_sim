@@ -14,7 +14,14 @@
 #include "shared_network.h"
 #include "shared_utils.h"
 
+
+namespace enet {
+  ENetEvent enet_event;
+}
+
 bool create_enet_host() {
+  enet_initialize();
+
   enet::enet_client = enet_host_create(nullptr, 1, 3, 0, 0);
 
   if (enet::enet_client == nullptr) {
