@@ -23,6 +23,7 @@ int main() {
   }
 
 
+
   if (!config::name.empty()) {
     global::status_ui = STATUS_UI_MAIN_MENU;
   }
